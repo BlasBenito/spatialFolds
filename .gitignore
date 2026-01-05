@@ -1,0 +1,131 @@
+# ==============================================================================
+# R SESSION FILES
+# ==============================================================================
+# These files store R session state and should not be version controlled
+# as they are user-specific and can contain sensitive data
+
+# Command history from interactive R sessions
+.Rhistory
+.Rapp.history
+
+# Workspace image containing all R objects from a session
+# May contain large data or intermediate results
+.RData
+.RDataTmp
+
+# User-specific RStudio workspace settings
+# Contains personal IDE preferences
+.Ruserdata
+
+
+# ==============================================================================
+# R PACKAGE BUILD ARTIFACTS
+# ==============================================================================
+# Files automatically generated during package building and checking
+# These are created by devtools/R CMD and should be regenerated, not committed
+
+# Example code extracted from .Rd files during R CMD check
+# Auto-generated from documentation examples
+*-Ex.R
+
+# Compressed package tarball created by R CMD build
+# Output file, not source - users should build their own
+/*.tar.gz
+
+# Directory created by R CMD check containing check results
+# Temporary output that changes with each check
+/*.Rcheck/
+
+
+# ==============================================================================
+# RSTUDIO FILES
+# ==============================================================================
+# RStudio-specific project files and settings
+# User-specific IDE configuration that varies by developer
+
+# RStudio project user-specific settings
+# Contains local paths, window positions, etc.
+.Rproj.user/
+
+
+# ==============================================================================
+# DOCUMENTATION BUILD OUTPUTS
+# ==============================================================================
+# Generated documentation that should be rebuilt, not committed
+# These are outputs from rendering processes, not source files
+
+# Built vignettes (HTML and PDF)
+# Source is in .Rmd files; these are generated outputs
+vignettes/*.html
+vignettes/*.pdf
+
+# pkgdown website output directory
+# Generated from package source and _pkgdown.yml
+# Deploy from docs/ but don't version control (too large, changes frequently)
+docs/
+
+# Quarto output and cache
+# Quarto is a publishing system; these are build artifacts
+.quarto
+
+
+# ==============================================================================
+# CACHE AND TEMPORARY FILES
+# ==============================================================================
+# Temporary files created during rendering and computation
+# Can be safely deleted and regenerated
+
+# knitr and R Markdown cache directories
+# Stores cached chunk results for faster re-rendering
+*_cache/
+/cache/
+
+# Temporary markdown files created during rendering
+# Intermediate files in the knit process
+*.utf8.md
+*.knit.md
+
+# Translation temporary files
+# Created during package internationalization
+po/*~
+
+
+# ==============================================================================
+# CREDENTIALS AND SECRETS
+# ==============================================================================
+# Files that may contain sensitive authentication data
+# MUST NOT be committed to prevent security breaches
+
+# OAuth2 tokens for httr package
+# Contains API authentication credentials
+.httr-oauth
+
+# Environment variables file
+# May contain API keys, passwords, database credentials
+.Renviron
+
+
+# ==============================================================================
+# PUBLISHING AND DEPLOYMENT
+# ==============================================================================
+# Files related to package deployment and publishing platforms
+# Contain deployment-specific settings
+
+# RStudio Connect deployment folder
+# Server-specific configuration for shinyapps.io or RStudio Connect
+rsconnect/
+
+
+# ==============================================================================
+# PLATFORM-SPECIFIC FILES
+# ==============================================================================
+# Operating system files that should not be in version control
+
+# macOS Finder metadata file
+# Contains folder view settings, icon positions
+.DS_Store
+
+
+# OTHER FILES
+VOICE.md
+CLAUDE.md

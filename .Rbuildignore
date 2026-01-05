@@ -1,0 +1,145 @@
+# ==============================================================================
+# .Rbuildignore - Files excluded from R package build
+# ==============================================================================
+#
+# This file uses REGULAR EXPRESSIONS (not glob patterns) to specify which files
+# and directories should be excluded when building the package with R CMD build.
+#
+# Syntax:
+#   ^  = start of path
+#   $  = end of path
+#   \. = literal dot (escaped)
+#
+# Files listed here exist in the source repository but are NOT included in the
+# distributed .tar.gz package file that users install.
+#
+# ==============================================================================
+
+
+# ==============================================================================
+# RSTUDIO PROJECT FILES
+# ==============================================================================
+# RStudio-specific files that are useful for development but not needed
+# in the installed package
+
+# RStudio project file - defines the project but not needed by end users
+^blankpkg\.Rproj$
+
+# RStudio user settings directory - contains IDE preferences and session data
+^\.Rproj\.user$
+
+
+# ==============================================================================
+# DEVELOPMENT INFRASTRUCTURE
+# ==============================================================================
+# Files and folders used during package development but not part of the
+# package functionality itself
+
+# Development scripts directory - contains workflow automation scripts
+# Users don't need dev/daily_*.R, dev/test_*.R, etc. in their installation
+^dev$
+
+# R package prototype directory - rpkgdev prototype under development
+# This will eventually become a separate package; excluded from template builds
+^rpackage$
+
+# Claude Code AI agents directory - specialized agents for documentation review
+# and CRAN submission assistance during development
+^\.claude$
+
+# GitHub Actions workflows directory - CI/CD configuration for GitHub
+# Contains workflow YAML files for automated testing and checks
+^\.github$
+
+# First-time user checklist - onboarding guide for template users
+# Helps users customize the template; not needed in installed package
+^FIRST-TIME-CHECKLIST\.md$
+
+# Comprehensive tutorial - complete guide merging multiple documentation sources
+# Development guide not needed in installed package
+^TUTORIAL\.md$
+
+# Project TODO list - development task tracking
+# Not needed in installed package
+^TODO\.md$
+
+
+# ==============================================================================
+# DOCUMENTATION SOURCE AND CONFIGURATION
+# ==============================================================================
+# Source files and configuration for documentation systems
+# The generated outputs are included, but not the build configuration
+
+# pkgdown configuration file - controls website generation
+# Not needed in installed package (only for building the website)
+^_pkgdown\.yml$
+
+# pkgdown generated website directory - documentation lives online, not in package
+^docs$
+
+# pkgdown working directory - temporary files during website build
+^pkgdown$
+
+# pkgdown articles - web-only documentation not included in package installation
+# Articles in vignettes/articles/ are built into pkgdown site but not the package
+^vignettes/articles$
+
+# README source file (R Markdown) - source that generates README.md
+# We include the rendered README.md but not the source .Rmd
+^README\.Rmd$
+
+# README rendered HTML - intermediate file from rendering, not needed in package
+^README\.html$
+
+# README rendered output - GitHub displays this, but package doesn't need it
+# Installation instructions and badges aren't relevant for installed package
+^README\.md$
+
+# Other documents
+^CRAN_CHECKLIST\.md$
+^TUTORIAL\.md$
+
+
+# ==============================================================================
+# CODE STYLE AND FORMATTING
+# ==============================================================================
+# Configuration files for code formatting tools
+# Used during development but not needed by package users
+
+# Air formatter configuration - defines code style rules
+# Optional leading dot handles both air.toml and .air.toml
+^[.]?air[.]toml$
+
+
+# ==============================================================================
+# PROJECT DOCUMENTATION
+# ==============================================================================
+# Development documentation and guidelines
+# Helpful for contributors but not needed in distributed package
+
+# Instructions for Claude Code (AI assistant) - development guidelines
+# Used for consistent code generation but not relevant to end users
+^CLAUDE\.md$
+^VOICE\.md$
+
+
+# ==============================================================================
+# CRAN SUBMISSION
+# ==============================================================================
+# Files used during CRAN submission process
+# These document the submission but aren't needed in the distributed package
+
+# CRAN submission comments - explains check results and submission context
+# Read by CRAN maintainers during review but not included in package
+^cran-comments\.md$
+
+
+# ==============================================================================
+# LICENSING
+# ==============================================================================
+# Extended license file with full text
+# R packages need LICENSE (template) but not LICENSE.md (full text)
+
+# LICENSE.md contains full license text for GitHub display
+# The LICENSE file (not ignored) contains the license template for R CMD check
+^LICENSE\.md$

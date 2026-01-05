@@ -1,0 +1,209 @@
+
+<!-- README.md is generated from README.Rmd. Please edit that file -->
+
+# blankpkg_template: Complete R Package Template
+
+<!-- CRAN badges: start
+&#10;Replace `mypackage` with your package's name
+&#10;[![CRAN status](https://www.r-pkg.org/badges/version/mypackage)](https://cran.r-project.org/package=mypackage)
+[![CRAN\_Download\_Badge](http://cranlogs.r-pkg.org/badges/grand-total/mypackage)](https://CRAN.R-project.org/package=mypackage)
+&#10;CRAN badges end -->
+<!-- GITHUB ACTIONS badges: start
+&#10;Replace `mygithubuser` with your Github user name, and mypackage with the repository name.
+This badge is populated by the Github action `.github/workflows/R-CMD-check.yaml` which will be triggered on push to the branch `main`.
+&#10;[![R-CMD-check](https://github.com/mygithubuser/mypackage/actions/workflows/R-CMD-check.yaml/badge.svg)](https://github.com/mygithubuser/mypackage/actions/workflows/R-CMD-check.yaml)
+&#10;end -->
+
+> **⚠️ IMPORTANT: This is a TEMPLATE repository**
+>
+> This README.Rmd explains how the template works. When you use this for
+> your own package, **replace this entire file** with documentation
+> specific to your package.
+
+## What is blankpkg_template?
+
+**A production-ready R package template with comprehensive development
+infrastructure.**
+
+This template provides:
+
+- **30 development functions** organized by workflow category
+- **Automatic pre-commit hooks** for code quality
+- **4-step CRAN release workflow**
+- **pkgdown website configuration** with example article
+- **Rcpp/C++ integration support**
+- **Claude Code AI agents** for documentation review and CRAN compliance
+- **Comprehensive testing and checking tools**
+
+**Design philosophy:** Make package development as fast and
+friction-free as possible.
+
+## Quick Start
+
+1.  **Use this template** on GitHub to create your repository
+
+2.  **Install development tools:**
+
+    ``` r
+    setup_install_tools()
+    ```
+
+3.  **Customize** DESCRIPTION and replace this README
+
+4.  **Learn the workflow:** Read [TUTORIAL.md](TUTORIAL.md) for complete
+    guide
+
+## Documentation Map
+
+Your comprehensive guide to all template resources:
+
+| Resource                       | Purpose                                   | When to Use                                           |
+|--------------------------------|-------------------------------------------|-------------------------------------------------------|
+| **[TUTORIAL.md](TUTORIAL.md)** | Complete step-by-step guide (2200+ lines) | First-time setup, learning workflows, troubleshooting |
+| **[CLAUDE.md](CLAUDE.md)**     | Claude Code AI integration guide          | Using AI agents, coding style, project conventions    |
+| **[.Rprofile](.Rprofile)**     | Auto-loading configuration                | Understanding function availability on startup        |
+| **[dev/](dev/)**               | Development function scripts              | All 30 development workflow functions                 |
+
+## Key Features
+
+### Development Functions
+
+30 functions organized by **prefix-based naming** for autocomplete
+discovery:
+
+- **`setup_*`** - Initial package configuration, Rcpp support
+- **`dev_*`** - Daily development workflows (load, quick check, complete
+  check)
+- **`test_*`** - Testing, coverage reporting, spell checking
+- **`check_*`** - Quality validation, best practices, multi-platform
+  checks
+- **`release_*`** - 4-step CRAN submission workflow
+- **`build_*`** - README and vignette generation
+- **`help_*`** - Interactive guides and installation help
+- **`report_*` / `template_*`** - Code analysis and development
+  templates
+
+**Workflow example:** Type `dev_` + TAB to see all daily development
+functions.
+
+**See
+[TUTORIAL.md#development-scripts-reference](TUTORIAL.md#development-scripts-reference)
+for complete function descriptions.**
+
+### Pre-Commit Hook System
+
+Automatically runs before each commit:
+
+1.  **jarl lint –fix** - Auto-fix linting issues (if installed)
+2.  **air format** - Code formatting (if installed)
+3.  **devtools::document()** - Update documentation (required)
+4.  **devtools::check()** - CRAN-level checks (required)
+
+Skip for quick commits: `git commit --no-verify -m "WIP"`
+
+**See
+[TUTORIAL.md#pre-commit-hook-system](TUTORIAL.md#pre-commit-hook-system)
+for details.**
+
+### Claude Code AI Agents
+
+Specialized agents in `.claude/` folder:
+
+- **roxygen-doc-reviewer** - Reviews roxygen2 documentation for
+  completeness, accuracy, and clarity
+- **cran-submission-expert** - Assists with CRAN preparation and policy
+  compliance
+
+**See
+[TUTORIAL.md#claude-code-ai-agents](TUTORIAL.md#claude-code-ai-agents)
+for usage examples.**
+
+### Automatic Package Detection
+
+All development functions auto-detect your package name—no hardcoding
+required. Works by reading DESCRIPTION file.
+
+## Acknowledgements
+
+This template would have been impossible without the outstanding effort
+of the R community and the developers of the following excellent
+packages:
+
+- **devtools** (Wickham et al., 2025) - Tools to make developing R
+  packages easier. The backbone of modern R package development.
+  <https://devtools.r-lib.org/>
+
+- **usethis** (Wickham et al., 2025) - Automates package and project
+  setup tasks, making package infrastructure setup painless.
+  <https://usethis.r-lib.org>
+
+- **testthat** (Wickham, 2011) - Unit testing framework that makes
+  testing R packages straightforward and enjoyable.
+  <https://testthat.r-lib.org/>
+
+- **covr** (Hester, 2023) - Test coverage analysis to identify untested
+  code and improve package quality. <https://covr.r-lib.org/>
+
+- **spelling** (Ooms & Hester, 2025) - Spell checking tools that catch
+  typos in documentation before they reach users.
+  <https://docs.ropensci.org/spelling/>
+
+- **goodpractice** - Package quality analyzer that provides actionable
+  recommendations for improving R packages.
+
+- **rhub** (Csárdi & Salmon, 2025) - Multi-platform package checking
+  infrastructure for validating packages across different systems.
+  <https://r-hub.github.io/rhub/>
+
+- **pkgdown** (Wickham et al., 2025) - Creates beautiful static HTML
+  documentation websites from R packages. <https://pkgdown.r-lib.org/>
+
+- **pkgnet** (Burns et al., 2024) - Network analysis and visualization
+  of package dependencies and structure.
+  <https://github.com/uptake/pkgnet>
+
+- **codetools** (Tierney, 2024) - Static code analysis tools for
+  identifying potential issues in R code.
+  <https://CRAN.R-project.org/package=codetools>
+
+- **microbenchmark** (Mersmann, 2024) - Accurate timing functions for
+  performance benchmarking and optimization.
+  <https://github.com/joshuaulrich/microbenchmark/>
+
+- **profvis** (Wickham et al., 2024) - Interactive visualizations for
+  profiling R code and identifying performance bottlenecks.
+  <https://profvis.r-lib.org>
+
+- **roxyglobals** (North, 2023) - Automatic global variable declarations
+  for roxygen2, eliminating manual NAMESPACE management.
+  <https://github.com/anthonynorth/roxyglobals>
+
+- **cli** (Csárdi, 2025) - Powerful helpers for creating beautiful
+  command line interfaces with rich formatting. <https://cli.r-lib.org>
+
+- **desc** (Csárdi et al., 2023) - Tools for reading, writing, and
+  manipulating DESCRIPTION files programmatically.
+  <https://CRAN.R-project.org/package=desc>
+
+Without these packages and their dedicated maintainers, modern R package
+development would be far more tedious. This template simply brings them
+together in a streamlined workflow.
+
+## License
+
+MIT License - See LICENSE.md file for details.
+
+## Getting Help
+
+- **Complete step-by-step tutorial:** [TUTORIAL.md](TUTORIAL.md)
+- **Development functions:** Browse [dev/](dev/) directory for all
+  workflow scripts
+- **Report issues or ask questions:** [GitHub
+  Issues](https://github.com/BlasBenito/blankpkg_template/issues)
+
+------------------------------------------------------------------------
+
+**Remember:** This README explains the template itself. When using this
+template for your own package, replace this file with documentation
+specific to your package. See [TUTORIAL.md](TUTORIAL.md) for complete
+instructions.

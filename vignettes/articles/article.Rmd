@@ -1,0 +1,106 @@
+---
+title: "Example Article"
+output: 
+  rmarkdown::html_document:
+    toc: true
+    toc_title: "Content"
+    source: false
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  eval = TRUE,
+  collapse = TRUE,
+  comment = "#>",
+  out.width = "100%"
+)
+```
+
+> **Template Users:** This is an example article showing how to create pkgdown articles. Replace this content with your own topic-specific documentation. Articles are perfect for tutorials, case studies, and supplementary documentation that doesn't fit in standard vignettes.
+
+## What Are pkgdown Articles?
+
+Articles are a special type of documentation in pkgdown that differ from standard vignettes:
+
+- **Vignettes** (in `vignettes/`) are included in the package installation and available via `browseVignettes()`
+- **Articles** (in `vignettes/articles/`) are only published on your pkgdown website, not in the installed package
+
+### When to Use Articles
+
+Use articles for:
+
+- **Tutorials** that require large datasets or external resources
+- **Case studies** with extensive examples
+- **Supplementary documentation** that's too detailed for vignettes
+- **Web-only content** like interactive visualizations or external API examples
+
+## Example: Using the Template Package
+
+This template includes an example function `lm_model()` that demonstrates best practices:
+
+```{r}
+library(blankpkg)
+
+# Load example data
+data(dummy_df)
+
+# Fit a linear model using the template's example function
+model <- lm_model(
+  df = dummy_df,
+  response = "a",
+  predictors = c("b", "c", "d")
+)
+
+# View model summary
+summary(model)
+```
+
+### Code Structure
+
+The example shows several best practices:
+
+1. **Input validation** - The function checks that inputs are valid
+2. **Flexible parameters** - Users can specify response and predictors
+3. **Informative errors** - Clear error messages guide users
+4. **Comprehensive documentation** - Full roxygen2 documentation with examples
+
+## Creating Your Own Articles
+
+When customizing this template:
+
+1. **Delete this example article** or use it as a reference
+2. **Create new articles** for your package's specific use cases
+3. **Organize articles** by topic in `_pkgdown.yml`:
+
+```yaml
+articles:
+  - title: "Getting Started"
+    navbar: ~
+    contents:
+    - intro
+  - title: "Advanced Topics"
+    navbar: Advanced
+    contents:
+    - advanced-usage
+    - performance-tips
+```
+
+4. **Build your site** with `source("dev/pkgdown_build_site.R")`
+
+## Tips for Writing Articles
+
+- **Use clear section headings** for easy navigation
+- **Include working code examples** that readers can copy-paste
+- **Add visualizations** when helpful (plots, diagrams, tables)
+- **Link to function documentation** using `` `function_name()` ``
+- **Keep it focused** - one article per topic
+
+## Further Reading
+
+- [pkgdown Articles Documentation](https://pkgdown.r-lib.org/articles/pkgdown.html#articles)
+- [R Markdown Guide](https://rmarkdown.rstudio.com/lesson-1.html)
+- See `dev/README.md` for all development scripts, including `pkgdown_build_site.R`
+
+---
+
+**Remember:** This is example content for the template. Replace it with documentation specific to your package's functionality!
