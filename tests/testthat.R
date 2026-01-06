@@ -7,6 +7,6 @@
 # * https://testthat.r-lib.org/articles/special-files.html
 
 library(testthat)
-library(blankpkg)
+library(spatialFolds)
 
-test_check("blankpkg")
+test_check("spatialFolds")

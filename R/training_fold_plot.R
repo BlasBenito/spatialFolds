@@ -87,8 +87,8 @@ training_fold_plot <- function(
   )
 
   graphics::points(
-    x = xy[1, "x"],
-    y = xy[1, "y"],
+    x = xy[center, "x"],
+    y = xy[center, "y"],
     col = "black",
     pch = 19,
     cex = 2
