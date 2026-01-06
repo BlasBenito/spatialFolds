@@ -71,9 +71,7 @@ dev_check_quick <- function() {
 
   cli::cli_alert_info("Running {.code devtools::document()} ...")
   devtools::document()
-  cli::cli_text("")
-
-  cli::cli_alert_success("Documentation complete")
+  devtools::document()
   cli::cli_text("")
 
   # Step 2: Check (without tests and examples)

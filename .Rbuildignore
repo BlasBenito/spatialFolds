@@ -23,7 +23,7 @@
 # in the installed package
 
 # RStudio project file - defines the project but not needed by end users
-^blankpkg\.Rproj$
+^spatialFolds\.Rproj$
 
 # RStudio user settings directory - contains IDE preferences and session data
 ^\.Rproj\.user$
@@ -38,6 +38,7 @@
 # Development scripts directory - contains workflow automation scripts
 # Users don't need dev/daily_*.R, dev/test_*.R, etc. in their installation
 ^dev$
+^dev_scripts$
 
 # R package prototype directory - rpkgdev prototype under development
 # This will eventually become a separate package; excluded from template builds

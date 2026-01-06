@@ -1,25 +1,11 @@
-#' Load Package for Interactive Development
+#' Document and Load Package for Interactive Development
 #'
-#' Loads all package functions into the current R session for interactive
-#' development and testing. This is the fastest way to make code changes
-#' available without reinstalling the package.
-#'
-#' @return `invisible(TRUE)` on success.
-#'
-#' @details
-#' This function provides instant access to your package code during development.
-#' It performs the following steps:
-#'
-#' 1. Checks for required dependencies (installs if needed)
-#' 2. Clears the console for a clean workspace
-#' 3. Loads all package functions with `devtools::load_all()`
-#' 4. Reports load time
+#' Updates the documentation and loads all functions into the current R session for interactive development and testing. This is the fastest way to make code changes available without reinstalling the package.
 #'
 #' The loaded functions behave as if the package were installed and loaded
 #' with `library()`, but without the installation overhead.
 #'
-#' @section Typical Runtime:
-#' Less than 1 second for most packages
+#' @return `invisible(TRUE)` on success.
 #'
 #' @section Prerequisites:
 #' - Must be run from package root directory
@@ -31,7 +17,6 @@
 #' - Rerun after changing function code to reload changes
 #' - Functions available immediately without `library()` call
 #' - Source code changes require reload (rerun this function)
-#' - Does NOT update documentation; use `check()` for that
 #'
 #' @section Typical Workflow:
 #' 1. Edit function code in `R/` directory
@@ -45,14 +30,6 @@
 #'
 #' @examples
 #' \dontrun{
-#' # Load package for interactive development
-#' dev_load()
-#'
-#' # Now test your functions interactively
-#' my_function(test_data)
-#'
-#' # Make changes to R/my_function.R
-#' # Then reload:
 #' dev_load()
 #' }
 dev_load <- function() {
@@ -62,32 +39,18 @@ dev_load <- function() {
     utils::install.packages("devtools")
   }
 
-  # Clear console
-  cat("\014")
-
-  # Print header
-  cli::cli_rule(
-    left = "DAILY WORKFLOW: LOAD PACKAGE"
-  )
-  cli::cli_text()
-
   # Load package
+  cli::cli_text()
   cli::cli_alert_info("Running {.code devtools::load_all()} ...")
   cli::cli_text()
 
+  devtools::document()
+  devtools::document()
   devtools::load_all()
 
   # Print summary
   cli::cli_text()
-  cli::cli_rule("PACKAGE LOADED")
-  cli::cli_text()
-  cli::cli_alert_info(
-    "Package functions are now available for interactive use"
-  )
-  cli::cli_alert_info(
-    "Modify code and rerun {.code dev_load()} to reload changes"
-  )
-  cli::cli_rule()
+  cli::cli_alert_info("Package loaded!")
 
   invisible(TRUE)
 }

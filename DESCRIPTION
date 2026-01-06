@@ -1,15 +1,14 @@
-Package: pkgname
-Title: What the Package Does (One Line, Title Case)
+Package: spatialFolds
+Title: Cohesive training and testing folds for spatial cross-validation
 Version: 0.0.0.9000
 Authors@R: 
-    person("First", "Last", , "first.last@example.com", role = c("aut", "cre"))
-Description: What the package does (one paragraph).
+    person("First", "Last", , "blasbenito@gmail.com", role = c("aut", "cre"))
+Description: Generates training and testing folds for spatial cross-validation preserving the spatial structure of the data.
 License: MIT + file LICENSE
 Encoding: UTF-8
 Roxygen: list(markdown = TRUE, roclets = c("collate", "namespace", "rd",
     "roxyglobals::global_roclet"))
 RoxygenNote: 7.3.3
-Imports:
 Suggests:
     roxyglobals,
     spelling,
@@ -21,3 +20,4 @@ Config/roxyglobals/unique: TRUE
 Depends: 
     R (>= 4.1.0)
 LazyData: true
+LazyDataCompression: xz 
