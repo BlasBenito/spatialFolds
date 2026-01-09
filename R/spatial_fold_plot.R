@@ -8,22 +8,22 @@
 #'
 #' @returns invisible
 #' @examples
-#' training <- training_fold(
+#' training <- method_contiguous(
 #'   xy = xy_matrix,
 #'   center = 1,
 #'   step_x = 0.4,
 #'   step_y = 0.1,
-#'   training_fraction = 0.50
+#'   target = 15000
 #' )
 #'
-#' training_fold_plot(
+#' spatial_fold_plot(
 #'   xy = xy_matrix,
 #'   center = 1,
 #'   training_fold = training
 #' )
 #' @autoglobal
 #' @export
-training_fold_plot <- function(
+spatial_fold_plot <- function(
   xy = NULL,
   center = NULL,
   training_fold = NULL,
@@ -87,8 +87,8 @@ training_fold_plot <- function(
   )
 
   graphics::points(
-    x = xy[center, "x"],
-    y = xy[center, "y"],
+    x = xy[1, "x"],
+    y = xy[1, "y"],
     col = "black",
     pch = 19,
     cex = 2

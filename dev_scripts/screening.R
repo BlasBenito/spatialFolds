@@ -7,7 +7,7 @@ training <- training_fold(
   training_fraction = 0.50
 )
 
-training_fold_plot(
+spatial_fold_plot(
   xy = xy_matrix,
   center = 10000,
   training_fold = training
@@ -22,7 +22,7 @@ training <- method_contiguous(
   target = 500
 )
 
-training_fold_plot(
+spatial_fold_plot(
   xy = xy_matrix,
   center = 500,
   training_fold = training

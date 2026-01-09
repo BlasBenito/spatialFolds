@@ -2,7 +2,7 @@
 #include <vector>
 using namespace Rcpp;
 
-//' (C++) Generate Training Fold Using Binary Search (Rectangle-Preserving)
+//' (C++) Generate Contiguous Training Fold Using Binary Search
 //' @description Optimized implementation using binary search to find rectangle dimensions. Maintains rectangle shape and uses step_x/step_y parameters while achieving significant speedup (15-20x) through reduced iterations.
 //' @param xy (required, numeric matrix) Two columns matrix with the locations to arrange. The first column is interpreted as "x" (longitude) and the second as "y" (latitude). Default: `NULL`
 //' @param center (required, integer) Index of the training fold center (1-based indexing as in R). Default: `NULL`
@@ -27,17 +27,17 @@ using namespace Rcpp;
 //' Performance: Typically 15-20x faster than R version on large datasets
 //'
 //' @examples
-//' training <- training_fold_binary(
+//' training <- method_contiguous(
 //'   xy = xy_matrix,
-//'   center = 1,
+//'   center = 1, #first record in xy_matrix
 //'   step_x = 0.4,
 //'   step_y = 0.1,
 //'   target = 15000
 //' )
 //'
-//' training_fold_plot(
+//' spatial_fold_plot(
 //'   xy = xy_matrix,
-//'   center = 1,
+//'   center = 1, #first record in xy_matrix
 //'   training_fold = training
 //' )
 //' @export

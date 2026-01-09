@@ -10,6 +10,20 @@ Rcpp::Rostream<true>&  Rcpp::Rcout = Rcpp::Rcpp_cout_get();
 Rcpp::Rostream<false>& Rcpp::Rcerr = Rcpp::Rcpp_cerr_get();
 #endif
 
+// method_blocks
+LogicalVector method_blocks(NumericMatrix xy, IntegerVector cell_id, int seed, double target);
+RcppExport SEXP _spatialFolds_method_blocks(SEXP xySEXP, SEXP cell_idSEXP, SEXP seedSEXP, SEXP targetSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< NumericMatrix >::type xy(xySEXP);
+    Rcpp::traits::input_parameter< IntegerVector >::type cell_id(cell_idSEXP);
+    Rcpp::traits::input_parameter< int >::type seed(seedSEXP);
+    Rcpp::traits::input_parameter< double >::type target(targetSEXP);
+    rcpp_result_gen = Rcpp::wrap(method_blocks(xy, cell_id, seed, target));
+    return rcpp_result_gen;
+END_RCPP
+}
 // method_contiguous
 LogicalVector method_contiguous(NumericMatrix xy, int center, double step_x, double step_y, double target);
 RcppExport SEXP _spatialFolds_method_contiguous(SEXP xySEXP, SEXP centerSEXP, SEXP step_xSEXP, SEXP step_ySEXP, SEXP targetSEXP) {
@@ -25,9 +39,24 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
+// method_random
+LogicalVector method_random(NumericMatrix xy, int seed, double target);
+RcppExport SEXP _spatialFolds_method_random(SEXP xySEXP, SEXP seedSEXP, SEXP targetSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< NumericMatrix >::type xy(xySEXP);
+    Rcpp::traits::input_parameter< int >::type seed(seedSEXP);
+    Rcpp::traits::input_parameter< double >::type target(targetSEXP);
+    rcpp_result_gen = Rcpp::wrap(method_random(xy, seed, target));
+    return rcpp_result_gen;
+END_RCPP
+}
 
 static const R_CallMethodDef CallEntries[] = {
+    {"_spatialFolds_method_blocks", (DL_FUNC) &_spatialFolds_method_blocks, 4},
     {"_spatialFolds_method_contiguous", (DL_FUNC) &_spatialFolds_method_contiguous, 5},
+    {"_spatialFolds_method_random", (DL_FUNC) &_spatialFolds_method_random, 3},
     {NULL, NULL, 0}
 };
 

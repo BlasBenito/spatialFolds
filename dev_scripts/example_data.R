@@ -23,6 +23,13 @@ xy_sf <- xy_matrix |>
     coords = c("x", "y"),
     crs = 4326,
     precision = 3
+  ) |>
+  dplyr::mutate(
+    id = dplyr::row_number()
+  ) |>
+  dplyr::relocate(
+    id,
+    .before = geometry
   )
 
 usethis::use_data(xy_sf, compress = "xz", overwrite = TRUE)
