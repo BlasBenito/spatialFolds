@@ -41,15 +41,15 @@ dev_load <- function() {
 
   # Load package
   cli::cli_text()
-  cli::cli_alert_info("Running {.code devtools::load_all()} ...")
-  cli::cli_text()
+  cli::cli_alert_info(
+    "Running {.code devtools::document()} and {.code devtools::load_all()} ..."
+  )
 
-  devtools::document()
-  devtools::document()
-  devtools::load_all()
+  suppressMessages(devtools::document(quiet = TRUE))
+  suppressMessages(devtools::document(quiet = TRUE))
+  devtools::load_all(quiet = TRUE)
 
   # Print summary
-  cli::cli_text()
   cli::cli_alert_info("Package loaded!")
 
   invisible(TRUE)

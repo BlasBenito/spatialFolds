@@ -11,22 +11,22 @@ Rcpp::Rostream<false>& Rcpp::Rcerr = Rcpp::Rcpp_cerr_get();
 #endif
 
 // method_blocks
-LogicalVector method_blocks(NumericMatrix xy, IntegerVector cell_id, int seed, double target);
-RcppExport SEXP _spatialFolds_method_blocks(SEXP xySEXP, SEXP cell_idSEXP, SEXP seedSEXP, SEXP targetSEXP) {
+LogicalVector method_blocks(NumericMatrix xy, IntegerVector block_id, int seed, double target);
+RcppExport SEXP _spatialFolds_method_blocks(SEXP xySEXP, SEXP block_idSEXP, SEXP seedSEXP, SEXP targetSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
     Rcpp::traits::input_parameter< NumericMatrix >::type xy(xySEXP);
-    Rcpp::traits::input_parameter< IntegerVector >::type cell_id(cell_idSEXP);
+    Rcpp::traits::input_parameter< IntegerVector >::type block_id(block_idSEXP);
     Rcpp::traits::input_parameter< int >::type seed(seedSEXP);
     Rcpp::traits::input_parameter< double >::type target(targetSEXP);
-    rcpp_result_gen = Rcpp::wrap(method_blocks(xy, cell_id, seed, target));
+    rcpp_result_gen = Rcpp::wrap(method_blocks(xy, block_id, seed, target));
     return rcpp_result_gen;
 END_RCPP
 }
-// method_contiguous
-LogicalVector method_contiguous(NumericMatrix xy, int center, double step_x, double step_y, double target);
-RcppExport SEXP _spatialFolds_method_contiguous(SEXP xySEXP, SEXP centerSEXP, SEXP step_xSEXP, SEXP step_ySEXP, SEXP targetSEXP) {
+// method_contiguous_planar
+LogicalVector method_contiguous_planar(NumericMatrix xy, int center, double step_x, double step_y, double target);
+RcppExport SEXP _spatialFolds_method_contiguous_planar(SEXP xySEXP, SEXP centerSEXP, SEXP step_xSEXP, SEXP step_ySEXP, SEXP targetSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -35,7 +35,21 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< double >::type step_x(step_xSEXP);
     Rcpp::traits::input_parameter< double >::type step_y(step_ySEXP);
     Rcpp::traits::input_parameter< double >::type target(targetSEXP);
-    rcpp_result_gen = Rcpp::wrap(method_contiguous(xy, center, step_x, step_y, target));
+    rcpp_result_gen = Rcpp::wrap(method_contiguous_planar(xy, center, step_x, step_y, target));
+    return rcpp_result_gen;
+END_RCPP
+}
+// method_contiguous_spherical
+LogicalVector method_contiguous_spherical(NumericMatrix xyz, int center, double angular_step, double target);
+RcppExport SEXP _spatialFolds_method_contiguous_spherical(SEXP xyzSEXP, SEXP centerSEXP, SEXP angular_stepSEXP, SEXP targetSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< NumericMatrix >::type xyz(xyzSEXP);
+    Rcpp::traits::input_parameter< int >::type center(centerSEXP);
+    Rcpp::traits::input_parameter< double >::type angular_step(angular_stepSEXP);
+    Rcpp::traits::input_parameter< double >::type target(targetSEXP);
+    rcpp_result_gen = Rcpp::wrap(method_contiguous_spherical(xyz, center, angular_step, target));
     return rcpp_result_gen;
 END_RCPP
 }
@@ -52,11 +66,38 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
+// thinning_to_distance
+IntegerVector thinning_to_distance(NumericMatrix xy, double distance);
+RcppExport SEXP _spatialFolds_thinning_to_distance(SEXP xySEXP, SEXP distanceSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< NumericMatrix >::type xy(xySEXP);
+    Rcpp::traits::input_parameter< double >::type distance(distanceSEXP);
+    rcpp_result_gen = Rcpp::wrap(thinning_to_distance(xy, distance));
+    return rcpp_result_gen;
+END_RCPP
+}
+// thinning_to_target
+IntegerVector thinning_to_target(NumericMatrix xy, int target);
+RcppExport SEXP _spatialFolds_thinning_to_target(SEXP xySEXP, SEXP targetSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< NumericMatrix >::type xy(xySEXP);
+    Rcpp::traits::input_parameter< int >::type target(targetSEXP);
+    rcpp_result_gen = Rcpp::wrap(thinning_to_target(xy, target));
+    return rcpp_result_gen;
+END_RCPP
+}
 
 static const R_CallMethodDef CallEntries[] = {
     {"_spatialFolds_method_blocks", (DL_FUNC) &_spatialFolds_method_blocks, 4},
-    {"_spatialFolds_method_contiguous", (DL_FUNC) &_spatialFolds_method_contiguous, 5},
+    {"_spatialFolds_method_contiguous_planar", (DL_FUNC) &_spatialFolds_method_contiguous_planar, 5},
+    {"_spatialFolds_method_contiguous_spherical", (DL_FUNC) &_spatialFolds_method_contiguous_spherical, 4},
     {"_spatialFolds_method_random", (DL_FUNC) &_spatialFolds_method_random, 3},
+    {"_spatialFolds_thinning_to_distance", (DL_FUNC) &_spatialFolds_thinning_to_distance, 2},
+    {"_spatialFolds_thinning_to_target", (DL_FUNC) &_spatialFolds_thinning_to_target, 2},
     {NULL, NULL, 0}
 };
 

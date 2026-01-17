@@ -4,12 +4,12 @@
 \alias{method_blocks}
 \title{(C++) Generate Blocks-Based Training Fold from Pre-computed Cell IDs}
 \usage{
-method_blocks(xy, cell_id, seed, target)
+method_blocks(xy, block_id, seed, target)
 }
 \arguments{
-\item{xy}{(required, numeric matrix) Two columns matrix with locations. Used only for dimension checking (nrow must equal length of cell_id). Default: \code{NULL}}
+\item{xy}{(required, numeric matrix) Two columns matrix with locations. Used only for dimension checking (nrow must equal length of block_id). Default: \code{NULL}}
 
-\item{cell_id}{(required, integer vector) Pre-computed cell assignment for each point (0-based cell IDs from sf_to_grid()). Default: \code{NULL}}
+\item{block_id}{(required, integer vector) Pre-computed cell assignment for each point (0-based cell IDs from block_ids()). Default: \code{NULL}}
 
 \item{seed}{(required, integer) Random seed for reproducibility. Default: \code{NULL}}
 
@@ -19,19 +19,19 @@ method_blocks(xy, cell_id, seed, target)
 logical vector with length equal to nrow(xy), where TRUE indicates training fold record
 }
 \description{
-Randomly selects entire grid cells until target count reached. Cell assignments must be pre-computed in R via sf_to_grid().
+Randomly selects entire grid cells until target count reached. Cell assignments must be pre-computed in R via block_ids().
 }
 \details{
 Algorithm:
 \enumerate{
-\item Count points per cell from cell_id vector (O(n) pass)
+\item Count points per cell from block_id vector (O(n) pass)
 \item Determine number of unique cells
 \item Shuffle cell IDs using Mersenne Twister RNG
 \item Select cells sequentially until cumulative count >= target
 \item Mark all points in selected cells as TRUE (O(n) pass)
 }
 
-\strong{Important}: Cell IDs must be pre-computed in R using sf_to_grid() before calling this function.
+\strong{Important}: Cell IDs must be pre-computed in R using block_ids() before calling this function.
 This optimization avoids recalculating cell assignments for each fold iteration.
 For 1000 folds, this provides ~1.5x speedup by computing assignments once instead of 1000 times.
 
@@ -39,13 +39,17 @@ Complexity: O(n + C log C) where C = number of unique cells
 Memory: O(C) - minimal overhead
 }
 \examples{
-# Cell IDs must be computed by sf_to_grid() in R first
-cell_id <- sf_to_grid(xy_matrix, grid_rows = 10, grid_columns = 10)
+\dontrun{
+# Cell IDs must be computed by block_ids() in R first
+data(xy_sf)
+data(xy_matrix)
+block_id <- block_ids(xy_sf, rows = 10, cols = 10)
 
 training <- method_blocks(
   xy = xy_matrix,
-  cell_id = cell_id,
+  block_id = block_id,
   seed = 123,
   target = 15000
 )
+}
 }

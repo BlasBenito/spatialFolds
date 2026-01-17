@@ -2,14 +2,25 @@
 #include <vector>
 using namespace Rcpp;
 
-//' (C++) Generate Contiguous Training Fold Using Binary Search
-//' @description Optimized implementation using binary search to find rectangle dimensions. Maintains rectangle shape and uses step_x/step_y parameters while achieving significant speedup (15-20x) through reduced iterations.
-//' @param xy (required, numeric matrix) Two columns matrix with the locations to arrange. The first column is interpreted as "x" (longitude) and the second as "y" (latitude). Default: `NULL`
-//' @param center (required, integer) Index of the training fold center (1-based indexing as in R). Default: `NULL`
-//' @param step_x (required, numeric) Rectangle growth increment along the x-axis. Must be in the same units as `xy`. Default: `NULL`
-//' @param step_y (required, numeric) Rectangle growth increment along the y-axis. Must be in the same units as `xy`. Default: `NULL`
-//' @param target (optional, integer) Number of records to include in the training fold. Default: `NULL`.
-//' @return logical vector with length equal to nrow(xy), where TRUE indicates a record is in the training fold and FALSE indicates it is in the testing fold.
+//' (C++) Generate Contiguous Training Fold Using Planar Geometry
+//' @description Optimized implementation using binary search to find rectangle
+//'   dimensions. Suitable for local to subcontinental scale data where planar
+//'   geometry is a good approximation. For global data near the dateline or
+//'   poles, use `method_contiguous_spherical()` instead.
+//' @param xy (required, numeric matrix) Two columns matrix with the locations
+//'   to arrange. The first column is interpreted as "x" (longitude) and the
+//'   second as "y" (latitude). Default: `NULL`
+//' @param center (required, integer) Index of the training fold center (1-based
+//'   indexing as in R). Default: `NULL`
+//' @param step_x (required, numeric) Rectangle growth increment along the
+//'   x-axis. Must be in the same units as `xy`. Default: `NULL`
+//' @param step_y (required, numeric) Rectangle growth increment along the
+//'   y-axis. Must be in the same units as `xy`. Default: `NULL`
+//' @param target (optional, integer) Number of records to include in the
+//'   training fold. Default: `NULL`.
+//' @return logical vector with length equal to nrow(xy), where TRUE indicates a
+//'   record is in the training fold and FALSE indicates it is in the testing
+//'   fold.
 //' @details
 //' This function uses binary search to efficiently find the rectangle size:
 //' \enumerate{
@@ -23,11 +34,11 @@ using namespace Rcpp;
 //' This maintains rectangle shape and produces similar results to the original
 //' implementation while being much faster through reduced iterations.
 //'
-//' Complexity: O(n log iterations) where iterations ≈ 10-15
+//' Complexity: O(n log iterations) where iterations = 10-15
 //' Performance: Typically 15-20x faster than R version on large datasets
 //'
 //' @examples
-//' training <- method_contiguous(
+//' training <- method_contiguous_planar(
 //'   xy = xy_matrix,
 //'   center = 1, #first record in xy_matrix
 //'   step_x = 0.4,
@@ -36,13 +47,13 @@ using namespace Rcpp;
 //' )
 //'
 //' spatial_fold_plot(
-//'   xy = xy_matrix,
-//'   center = 1, #first record in xy_matrix
+//'   df = xy_matrix,
 //'   training_fold = training
 //' )
+//' @family contiguous
 //' @export
 // [[Rcpp::export]]
-LogicalVector method_contiguous(
+LogicalVector method_contiguous_planar(
     NumericMatrix xy,
     int center,
     double step_x,
@@ -52,6 +63,16 @@ LogicalVector method_contiguous(
 
 
   int n = xy.nrow();
+
+  // Check for empty input
+  if (n == 0) {
+    return LogicalVector(0);
+  }
+
+  // Validate center index bounds (catches NA which becomes NA_INTEGER)
+  if (center < 1 || center > n) {
+    stop("method_contiguous_planar: center index %d out of bounds [1, %d]", center, n);
+  }
 
   // Convert R's 1-based indexing to C++'s 0-based indexing
   int center_idx = center - 1;

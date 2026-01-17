@@ -1,5 +1,7 @@
 ---
 output: github_document
+editor_options:
+  chunk_output_type: console
 ---
 
 <!-- README.md is generated from README.Rmd. Please edit that file -->
@@ -13,17 +15,249 @@ knitr::opts_chunk$set(
 )
 ```
 
-# spatialFolds
+# spatialFolds <a href="https://blasbenito.github.io/spatialFolds/"><img src="man/figures/logo.png" align="right" height="138" alt="spatialFolds website" /></a>
 
-<!-- CRAN badges: start
+<!-- badges: start -->
+[![Lifecycle: experimental](https://img.shields.io/badge/lifecycle-experimental-orange.svg)](https://lifecycle.r-lib.org/articles/stages.html#experimental)
+[![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](https://opensource.org/licenses/MIT)
+<!-- badges: end -->
 
-[![CRAN status](https://www.r-pkg.org/badges/version/spatialFolds)](https://cran.r-project.org/package=spatialFolds)
-[![CRAN\_Download\_Badge](http://cranlogs.r-pkg.org/badges/grand-total/spatialFolds)](https://CRAN.R-project.org/package=spatialFolds)
+The R package **spatialFolds** provides fast tools for spatial data-splitting and spatial thinning, powered by C++ via Rcpp. It introduces a novel contiguous method that preserves spatial structure by growing rectangular folds from well-distributed center points.
 
-CRAN badges end -->
+## Summary
 
-<!-- GITHUB ACTIONS badges: start
+- [**Spatial cross-validation**](#spatial-cross-validation): Generate training/testing folds with three methods: 
 
-[![R-CMD-check](https://github.com/BlasBenito/spatialFolds/actions/workflows/R-CMD-check.yaml/badge.svg)](https://github.com/BlasBenito/spatialFolds/actions/workflows/R-CMD-check.yaml)
+  - **contiguous**: rectangle-growing from distributed centers to preserve spatial structure    
+  - **blocks**: grid-based selection
+  - **random** traditional random splitting with no spatial structure.
 
-end -->
+- [**Spatial thinning**](#spatial-thinning): Reduce point density to a minimum distance or target count using efficient grid-based spatial indexing.
+
+- [**tidymodels integration**](#tidymodels-integration): Functions `spatial_contiguous_cv()` and `spatial_blocks_cv()` return rsample-compatible objects for seamless use with `tune::fit_resamples()`.
+
+- [**C++ performance**](#): Core algorithms implemented in C++ with binary search optimization and grid-based indexing for fast execution on large datasets.
+
+- [**Flexible parallelization**](#setup): R function [spatial_folds()] has built-in support for parallel execution via `future` and progress tracking via `progressr`.
+
+
+## Install
+
+Install **spatialFolds** from GitHub:
+
+```{r, eval=FALSE}
+remotes::install_github(
+  repo = "blasbenito/spatialFolds",
+  ref = "main"
+)
+```
+
+
+## Getting Started
+
+### Setup
+
+```{r setup, message=FALSE}
+library(spatialFolds)
+```
+
+Enable parallelization with `future`:
+
+```{r parallel-setup, eval=FALSE}
+library(future)
+future::plan("multisession", workers = 4)
+```
+
+Enable progress bars with `progressr` (does not work in Rmarkdown):
+
+```{r progress-setup, eval=FALSE}
+progressr::handlers(global = TRUE)
+```
+
+
+### Example Data
+
+The package includes a dataset with 30,000 global point locations for testing:
+
+```{r example-data}
+data(xy_sf)
+head(xy_sf, 10)
+```
+
+
+### Spatial Cross-Validation
+
+The `spatial_folds()` function generates training/testing folds using different spatial strategies. 
+
+The **contiguous** method creates spatially coherent training folds by growing rectangles from well-distributed center points:
+
+```{r contiguous-folds}
+folds <- spatial_folds(
+  df = xy_sf,
+  methods = "contiguous",
+  training_fraction = 0.50,
+  n = 5, #number of repetitions
+  seed = 1
+)
+```
+
+The result is a data frame with logical columns where `TRUE` indicates training samples and `FALSE` indicates testing samples:
+
+```{r folds-structure}
+head(folds)
+```
+
+Visualize the spatial structure of a fold:
+
+```{r fold-plot, fig.height=5, fig.width=7}
+spatial_fold_plot(
+  df = xy_sf,
+  training_fold = folds[, 5]
+)
+```
+
+The contiguous method preserves spatial clustering in the training set, which is important for evaluating models where spatial autocorrelation affects predictions.
+
+**Other methods** available:
+
+- `"blocks"`: Randomly selects entire grid cells until the training fraction is reached. Useful when spatial heterogeneity follows a grid pattern.
+
+```{r blocks-folds, fig.height=5, fig.width=7}
+folds <- spatial_folds(
+  df = xy_sf,
+  methods = "blocks",
+  training_fraction = 0.50,
+  n = 5,
+  seed = 1
+)
+
+spatial_fold_plot(
+  df = xy_sf,
+  training_fold = folds[, 1]
+)
+```
+
+- `"random"`: Traditional random splitting without spatial structure. Provides a baseline comparison.
+
+```{r random-folds, fig.height=5, fig.width=7}
+folds <- spatial_folds(
+  df = xy_sf,
+  methods = "random",
+  training_fraction = 0.50,
+  n = 5,
+  seed = 1
+)
+
+spatial_fold_plot(
+  df = xy_sf,
+  training_fold = folds[, 1]
+)
+```
+
+### tidymodels Integration
+
+For direct integration with tidymodels workflows, use `spatial_contiguous_cv()`:
+
+```{r tidymodels-cv}
+cv_folds <- spatial_contiguous_cv(
+  data = xy_sf,
+  v = 5,
+  prop = 0.8,
+  seed = 123
+)
+
+cv_folds
+```
+
+This returns an `rset` object compatible with `tune::fit_resamples()` and other tidymodels functions:
+
+```{r tidymodels-example, eval=FALSE}
+library(tune)
+library(parsnip)
+library(workflows)
+
+# Define model and workflow
+model <- linear_reg() |> set_engine("lm")
+wf <- workflow() |> add_model(model) |> add_formula(y ~ x)
+
+# Fit with spatial cross-validation
+results <- fit_resamples(wf, resamples = cv_folds)
+```
+
+Similarly, `spatial_blocks_cv()` provides block-based spatial cross-validation with the same tidymodels compatibility.
+
+
+### Spatial Thinning
+
+The `spatial_thinning()` function reduces point density while maintaining spatial coverage:
+
+```{r spatial-thinning}
+# Thin to approximately 500 points
+thinned <- spatial_thinning(
+  df = xy_sf,
+  method = "target",
+  target = 500
+)
+
+nrow(thinned)
+```
+
+Visualize the thinning result:
+
+```{r thinning-plot, fig.height=5, fig.width=10}
+par(mfrow = c(1, 2))
+
+# Original data
+plot(
+  sf::st_coordinates(xy_sf),
+  pch = 16,
+  cex = 0.3,
+  col = "gray50",
+  main = paste("Original:", nrow(xy_sf), "points"),
+  xlab = "x",
+  ylab = "y"
+)
+
+# Thinned data
+plot(
+  sf::st_coordinates(thinned),
+  pch = 16,
+  cex = 0.8,
+  col = "blue3",
+  main = paste("Thinned:", nrow(thinned), "points"),
+  xlab = "x",
+  ylab = "y"
+)
+```
+
+Use `method = "distance"` to enforce a fixed minimum distance between points:
+
+```{r spatial-thinning-distance, eval=FALSE}
+# Thin using minimum distance
+thinned_distance <- spatial_thinning(
+  df = xy_sf,
+  method = "distance",
+  distance = 5
+)
+```
+
+Use cases for spatial thinning include:
+
+- Reducing pseudo-replication from clustered sampling
+- Generating well-distributed center points for spatial cross-validation
+- Subsampling large datasets while preserving spatial coverage
+
+
+## Citation
+
+If you find this package useful, please cite it:
+
+```{r citation, eval=FALSE}
+citation("spatialFolds")
+```
+
+
+## Support
+
+- Report bugs or request features: [GitHub Issues](https://github.com/blasbenito/spatialFolds/issues)
+- Package documentation: [pkgdown site](https://blasbenito.github.io/spatialFolds/)

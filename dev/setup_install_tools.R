@@ -58,7 +58,6 @@ setup_install_tools <- function() {
   dev_packages <- c(
     "devtools",
     "roxygen2",
-    "roxygen2Comment",
     "usethis",
     "here",
     "roxyglobals",
@@ -98,6 +97,8 @@ setup_install_tools <- function() {
     pkgs = dev_packages,
     Ncpus = ncores
   )
+
+  devtools::install_github("csgillespie/roxygen2Comment", force = TRUE)
 
   cli::cli_text("")
   cli::cli_alert_success("All development dependencies installed successfully")

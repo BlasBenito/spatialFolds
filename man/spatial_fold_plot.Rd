@@ -5,22 +5,34 @@
 \title{Quick plot of a single training fold}
 \usage{
 spatial_fold_plot(
-  xy = NULL,
-  center = NULL,
+  df = NULL,
   training_fold = NULL,
   color_training = "blue3",
   color_testing = "red3",
-  legend_position = "bottomleft"
+  legend_position = "bottomleft",
+  ...
 )
 }
 \arguments{
-\item{training_fold}{(required, logical vector) Output of \link{training_fold} on \code{xy}. Default: \code{NULL}}
+\item{df}{(required, matrix or data.frame) A matrix or data frame with at
+least two numeric columns representing x and y coordinates. Can also be
+an sf object, from which coordinates will be extracted. Default: \code{NULL}}
 
-\item{color_training}{(optional, color name) Color of the training records. Default: \code{"blue3"}}
+\item{training_fold}{(required, logical vector) Column of a dataframe
+produced with \code{\link[=spatial_folds]{spatial_folds()}} or a training mask resulting from
+\code{\link[=training_mask]{training_mask()}}. Default: \code{NULL}}
 
-\item{color_testing}{(optional, color name) Color of the testing records. Default: \code{"red3"}}
+\item{color_training}{(optional, color name) Color of the training records.
+Default: \code{"blue3"}}
 
-\item{legend_position}{(optional, string) Position of the legend. One of "bottomright", "bottom", "bottomleft", "left", "topleft", "top", "topright", "right" and "center". Default: \code{"bottomleft"}}
+\item{color_testing}{(optional, color name) Color of the testing records.
+Default: \code{"red3"}}
+
+\item{legend_position}{(optional, string) Position of the legend. One of
+"bottomright", "bottom", "bottomleft", "left", "topleft", "top",
+"topright", "right" and "center". Default: \code{"bottomleft"}}
+
+\item{...}{Internal parameters passed from parent functions.}
 }
 \value{
 invisible
@@ -29,7 +41,7 @@ invisible
 Quick plot of a single training fold
 }
 \examples{
-training <- method_contiguous(
+training <- method_contiguous_planar(
   xy = xy_matrix,
   center = 1,
   step_x = 0.4,
@@ -38,8 +50,7 @@ training <- method_contiguous(
 )
 
 spatial_fold_plot(
-  xy = xy_matrix,
-  center = 1,
+  df = xy_matrix,
   training_fold = training
 )
 }

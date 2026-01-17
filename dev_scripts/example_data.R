@@ -13,6 +13,7 @@ xy_matrix <- vi |>
     x = round(longitude, 3),
     y = round(latitude, 3)
   ) |>
+  dplyr::arrange(x, y) |>
   as.matrix()
 
 usethis::use_data(xy_matrix, compress = "xz", overwrite = TRUE)

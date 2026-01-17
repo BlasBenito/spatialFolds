@@ -1,14 +1,22 @@
 #' Quick plot of a single training fold
+#' @param df (required, matrix or data.frame) A matrix or data frame with at
+#'   least two numeric columns representing x and y coordinates. Can also be
+#'   an sf object, from which coordinates will be extracted. Default: `NULL`
+#' @param training_fold (required, logical vector) Column of a dataframe
+#'   produced with [spatial_folds()] or a training mask resulting from
+#'   [training_mask()]. Default: `NULL`
+#' @param color_training (optional, color name) Color of the training records.
+#'   Default: `"blue3"`
+#' @param color_testing (optional, color name) Color of the testing records.
+#'   Default: `"red3"`
+#' @param legend_position (optional, string) Position of the legend. One of
+#'   "bottomright", "bottom", "bottomleft", "left", "topleft", "top",
+#'   "topright", "right" and "center". Default: `"bottomleft"`
 #'
-#' @inheritParams training_fold
-#' @param training_fold (required, logical vector) Output of [training_fold] on `xy`. Default: `NULL`
-#' @param color_training (optional, color name) Color of the training records. Default: `"blue3"`
-#' @param color_testing (optional, color name) Color of the testing records. Default: `"red3"`
-#' @param legend_position (optional, string) Position of the legend. One of "bottomright", "bottom", "bottomleft", "left", "topleft", "top", "topright", "right" and "center". Default: `"bottomleft"`
-#'
+#' @param ... Internal parameters passed from parent functions.
 #' @returns invisible
 #' @examples
-#' training <- method_contiguous(
+#' training <- method_contiguous_planar(
 #'   xy = xy_matrix,
 #'   center = 1,
 #'   step_x = 0.4,
@@ -17,55 +25,59 @@
 #' )
 #'
 #' spatial_fold_plot(
-#'   xy = xy_matrix,
-#'   center = 1,
+#'   df = xy_matrix,
 #'   training_fold = training
 #' )
 #' @autoglobal
 #' @export
 spatial_fold_plot <- function(
-  xy = NULL,
-  center = NULL,
+  df = NULL,
   training_fold = NULL,
   color_training = "blue3",
   color_testing = "red3",
-  legend_position = "bottomleft"
+  legend_position = "bottomleft",
+  ...
 ) {
+  # ==========================================================================
+  # Function name for hierarchical error messages
+  # ==========================================================================
+  dots <- list(...)
+  function_name <- collinear::validate_arg_function_name(
+    default_name = "spatialFolds::spatial_fold_plot()",
+    function_name = dots$function_name
+  )
+
   if (!is.logical(training_fold)) {
     stop(
-      "spatialFolds::plot_training_fold(): argument 'training_fold' must be a logical vector.",
+      function_name, ": argument 'training_fold' must be a logical vector.",
       call. = FALSE
     )
   }
 
-  if (length(training_fold) != nrow(xy)) {
+  # Handle sf objects
+  if (inherits(df, "sf")) {
+    df <- sf::st_coordinates(df)
+  }
+
+  if (length(training_fold) != nrow(df)) {
     stop(
-      "spatialFolds::plot_training_fold(): argument 'training_fold' must be of the same length as rows in argument 'xy'.",
+      function_name, ": argument 'training_fold' must be of the same length as rows in argument 'df'.",
       call. = FALSE
     )
   }
 
-  if (ncol(xy) < 2) {
+  if (ncol(df) < 2) {
     stop(
-      "spatialFolds::plot_training_fold(): argument 'xy' must have at least two columns",
+      function_name, ": argument 'df' must have at least two columns",
       call. = FALSE
     )
   }
 
-  colnames(xy) <- c("x", "y")
+  colnames(df) <- c("x", "y")
 
-  if (!is.numeric(xy[, "x"]) || !is.numeric(xy[, "x"])) {
+  if (!is.numeric(df[, "x"]) || !is.numeric(df[, "y"])) {
     stop(
-      "spatialFolds::plot_training_fold(): argument 'xy' must be a dataframe or matrix with two numeric columns",
-      call. = FALSE
-    )
-  }
-
-  if (center > nrow(xy)) {
-    stop(
-      "spatialFolds::plot_training_fold(): argument 'center' must be a integer between 1 and ",
-      nrow(xy),
-      ".",
+      function_name, ": argument 'df' must be a dataframe or matrix with two numeric columns",
       call. = FALSE
     )
   }
@@ -77,27 +89,19 @@ spatial_fold_plot <- function(
   )
 
   graphics::plot(
-    x = xy[, "x"],
-    y = xy[, "y"],
+    x = df[, "x"],
+    y = df[, "y"],
     col = cols,
-    xlim = range(xy[, "x"]),
-    ylim = range(xy[, "y"]),
+    xlim = range(df[, "x"]),
+    ylim = range(df[, "y"]),
     xlab = "x",
     ylab = "y"
   )
 
-  graphics::points(
-    x = xy[1, "x"],
-    y = xy[1, "y"],
-    col = "black",
-    pch = 19,
-    cex = 2
-  )
-
   graphics::legend(
     legend_position,
-    legend = c("Training", "Testing", "Fold center"),
-    col = c(color_training, color_testing, "black"),
+    legend = c("Training", "Testing"),
+    col = c(color_training, color_testing),
     pch = c(1, 1, 19),
     pt.cex = c(1, 1, 2),
     x.intersp = 0.6,

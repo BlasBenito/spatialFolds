@@ -91,7 +91,7 @@ LogicalVector method_blocks(NumericMatrix xy, IntegerVector cell_id,
 ```
 
 **Algorithm**:
-1. Accept pre-computed cell assignments from `sf_to_grid()`
+1. Accept pre-computed cell assignments from `block_ids()`
 2. Count points per grid cell
 3. Shuffle cells randomly
 4. Select cells until cumulative count ≥ target
@@ -500,7 +500,7 @@ Buffer method doesn't fit current design. IF strict spatial independence needed 
 Before adding new methods, complete core infrastructure:
 
 1. ✅ **C++ methods implemented**: method_random, method_blocks, method_contiguous
-2. ⏸️ **R helper functions**: `sf_to_grid()` for cell assignment
+2. ⏸️ **R helper functions**: `block_ids()` for cell assignment
 3. ⏸️ **Main function**: `spatial_folds()` integration with futureverse
 4. ⏸️ **Visualization**: `spatial_fold_plot()` diagnostics
 5. ⏸️ **Documentation**: Vignettes showing when to use each method

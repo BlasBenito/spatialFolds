@@ -2,23 +2,23 @@
 # Generator token: 10BE3573-1514-4C36-9D1C-5A225CD40393
 
 #' (C++) Generate Blocks-Based Training Fold from Pre-computed Cell IDs
-#' @description Randomly selects entire grid cells until target count reached. Cell assignments must be pre-computed in R via sf_to_grid().
-#' @param xy (required, numeric matrix) Two columns matrix with locations. Used only for dimension checking (nrow must equal length of cell_id). Default: `NULL`
-#' @param cell_id (required, integer vector) Pre-computed cell assignment for each point (0-based cell IDs from sf_to_grid()). Default: `NULL`
+#' @description Randomly selects entire grid cells until target count reached. Cell assignments must be pre-computed in R via block_ids().
+#' @param xy (required, numeric matrix) Two columns matrix with locations. Used only for dimension checking (nrow must equal length of block_id). Default: `NULL`
+#' @param block_id (required, integer vector) Pre-computed cell assignment for each point (0-based cell IDs from block_ids()). Default: `NULL`
 #' @param seed (required, integer) Random seed for reproducibility. Default: `NULL`
 #' @param target (required, integer) Number of records to include in training fold. Default: `NULL`
 #' @return logical vector with length equal to nrow(xy), where TRUE indicates training fold record
 #' @details
 #' Algorithm:
 #' \enumerate{
-#'   \item Count points per cell from cell_id vector (O(n) pass)
+#'   \item Count points per cell from block_id vector (O(n) pass)
 #'   \item Determine number of unique cells
 #'   \item Shuffle cell IDs using Mersenne Twister RNG
 #'   \item Select cells sequentially until cumulative count >= target
 #'   \item Mark all points in selected cells as TRUE (O(n) pass)
 #' }
 #'
-#' **Important**: Cell IDs must be pre-computed in R using sf_to_grid() before calling this function.
+#' **Important**: Cell IDs must be pre-computed in R using block_ids() before calling this function.
 #' This optimization avoids recalculating cell assignments for each fold iteration.
 #' For 1000 folds, this provides ~1.5x speedup by computing assignments once instead of 1000 times.
 #'
@@ -26,28 +26,43 @@
 #' Memory: O(C) - minimal overhead
 #'
 #' @examples
-#' # Cell IDs must be computed by sf_to_grid() in R first
-#' cell_id <- sf_to_grid(xy_matrix, grid_rows = 10, grid_columns = 10)
+#' \dontrun{
+#' # Cell IDs must be computed by block_ids() in R first
+#' data(xy_sf)
+#' data(xy_matrix)
+#' block_id <- block_ids(xy_sf, rows = 10, cols = 10)
 #'
 #' training <- method_blocks(
 #'   xy = xy_matrix,
-#'   cell_id = cell_id,
+#'   block_id = block_id,
 #'   seed = 123,
 #'   target = 15000
 #' )
+#' }
 #' @export
-method_blocks <- function(xy, cell_id, seed, target) {
-    .Call(`_spatialFolds_method_blocks`, xy, cell_id, seed, target)
+method_blocks <- function(xy, block_id, seed, target) {
+    .Call(`_spatialFolds_method_blocks`, xy, block_id, seed, target)
 }
 
-#' (C++) Generate Contiguous Training Fold Using Binary Search
-#' @description Optimized implementation using binary search to find rectangle dimensions. Maintains rectangle shape and uses step_x/step_y parameters while achieving significant speedup (15-20x) through reduced iterations.
-#' @param xy (required, numeric matrix) Two columns matrix with the locations to arrange. The first column is interpreted as "x" (longitude) and the second as "y" (latitude). Default: `NULL`
-#' @param center (required, integer) Index of the training fold center (1-based indexing as in R). Default: `NULL`
-#' @param step_x (required, numeric) Rectangle growth increment along the x-axis. Must be in the same units as `xy`. Default: `NULL`
-#' @param step_y (required, numeric) Rectangle growth increment along the y-axis. Must be in the same units as `xy`. Default: `NULL`
-#' @param target (optional, integer) Number of records to include in the training fold. Default: `NULL`.
-#' @return logical vector with length equal to nrow(xy), where TRUE indicates a record is in the training fold and FALSE indicates it is in the testing fold.
+#' (C++) Generate Contiguous Training Fold Using Planar Geometry
+#' @description Optimized implementation using binary search to find rectangle
+#'   dimensions. Suitable for local to subcontinental scale data where planar
+#'   geometry is a good approximation. For global data near the dateline or
+#'   poles, use `method_contiguous_spherical()` instead.
+#' @param xy (required, numeric matrix) Two columns matrix with the locations
+#'   to arrange. The first column is interpreted as "x" (longitude) and the
+#'   second as "y" (latitude). Default: `NULL`
+#' @param center (required, integer) Index of the training fold center (1-based
+#'   indexing as in R). Default: `NULL`
+#' @param step_x (required, numeric) Rectangle growth increment along the
+#'   x-axis. Must be in the same units as `xy`. Default: `NULL`
+#' @param step_y (required, numeric) Rectangle growth increment along the
+#'   y-axis. Must be in the same units as `xy`. Default: `NULL`
+#' @param target (optional, integer) Number of records to include in the
+#'   training fold. Default: `NULL`.
+#' @return logical vector with length equal to nrow(xy), where TRUE indicates a
+#'   record is in the training fold and FALSE indicates it is in the testing
+#'   fold.
 #' @details
 #' This function uses binary search to efficiently find the rectangle size:
 #' \enumerate{
@@ -61,11 +76,11 @@ method_blocks <- function(xy, cell_id, seed, target) {
 #' This maintains rectangle shape and produces similar results to the original
 #' implementation while being much faster through reduced iterations.
 #'
-#' Complexity: O(n log iterations) where iterations ≈ 10-15
+#' Complexity: O(n log iterations) where iterations = 10-15
 #' Performance: Typically 15-20x faster than R version on large datasets
 #'
 #' @examples
-#' training <- method_contiguous(
+#' training <- method_contiguous_planar(
 #'   xy = xy_matrix,
 #'   center = 1, #first record in xy_matrix
 #'   step_x = 0.4,
@@ -74,13 +89,73 @@ method_blocks <- function(xy, cell_id, seed, target) {
 #' )
 #'
 #' spatial_fold_plot(
-#'   xy = xy_matrix,
-#'   center = 1, #first record in xy_matrix
+#'   df = xy_matrix,
 #'   training_fold = training
 #' )
+#' @family contiguous
 #' @export
-method_contiguous <- function(xy, center, step_x, step_y, target) {
-    .Call(`_spatialFolds_method_contiguous`, xy, center, step_x, step_y, target)
+method_contiguous_planar <- function(xy, center, step_x, step_y, target) {
+    .Call(`_spatialFolds_method_contiguous_planar`, xy, center, step_x, step_y, target)
+}
+
+#' (C++) Generate Contiguous Training Fold Using Spherical Geometry
+#' @description Generates contiguous training folds on a sphere using angular
+#'   distance from a center point. This method correctly handles data near the
+#'   dateline (longitude +-180) and poles (latitude +-90) where planar geometry
+#'   fails. The fold grows as a spherical cap centered on the specified point.
+#' @param xyz (required, numeric matrix) Three-column matrix with Cartesian
+#'   coordinates (x, y, z) on a unit sphere. Use `cast_xy_to_xyz()` to convert
+#'   from longitude/latitude. Default: `NULL`
+#' @param center (required, integer) Index of the training fold center (1-based
+#'   indexing as in R). Default: `NULL`
+#' @param angular_step (required, numeric) Angular growth increment in radians.
+#'   Controls the precision of the binary search. Typical values: 0.001 to 0.01
+#'   radians (0.06 to 0.6 degrees). Default: `NULL`
+#' @param target (required, integer) Number of records to include in the
+#'   training fold. Default: `NULL`.
+#' @return logical vector with length equal to nrow(xyz), where TRUE indicates
+#'   a record is in the training fold and FALSE indicates it is in the testing
+#'   fold.
+#' @details
+#' This function uses binary search to efficiently find the angular radius:
+#' \enumerate{
+#'   \item Extracts center point coordinates from xyz matrix
+#'   \item Binary searches for angular radius that yields target count
+#'   \item Angular distance calculated via dot product: acos(dot(p1, p2))
+#'   \item For unit sphere points, dot product equals cosine of angular distance
+#'   \item Returns logical vector marking points within final radius
+#' }
+#'
+#' The spherical cap approach ensures:
+#' \itemize{
+#'   \item Points near the dateline are correctly identified as neighbors
+#'   \item Points near poles are correctly grouped regardless of longitude
+#'   \item The fold shape is circular on the sphere surface
+#' }
+#'
+#' Complexity: O(n log iterations) where iterations is typically 10-15
+#'
+#' @examples
+#' # Create polar test data
+#' polar_xy <- cbind(
+#'   x = runif(1000, -180, 180),
+#'   y = runif(1000, 75, 90)
+#' )
+#' xyz <- cast_xy_to_xyz(polar_xy)
+#'
+#' training <- method_contiguous_spherical(
+#'   xyz = xyz,
+#'   center = 1,
+#'   angular_step = 0.01,
+#'   target = 500
+#' )
+#'
+#' sum(training)  # Should be close to 500
+#'
+#' @family contiguous
+#' @export
+method_contiguous_spherical <- function(xyz, center, angular_step, target) {
+    .Call(`_spatialFolds_method_contiguous_spherical`, xyz, center, angular_step, target)
 }
 
 #' (C++) Generate Random Training Fold
@@ -111,5 +186,164 @@ method_contiguous <- function(xy, center, step_x, step_y, target) {
 #' @export
 method_random <- function(xy, seed, target) {
     .Call(`_spatialFolds_method_random`, xy, seed, target)
+}
+
+#' (C++) Apply Spatial Thinning with Fixed Minimum Distance (Optimized with Grid Indexing)
+#' @description Applies greedy sequential thinning by removing points within rectangular neighborhoods until all remaining points are separated by at least the minimum distance. **Optimized version** using grid-based spatial indexing for O(n × k) performance instead of O(n²).
+#' @param xy (required, numeric matrix) Two columns matrix with the locations. The first column is interpreted as "x" (longitude) and the second as "y" (latitude). Default: `NULL`
+#' @param distance (required, numeric) Minimum distance to enforce between points. Points within a rectangle of ±distance in both x and y dimensions will be removed. Must be in same units as coordinates. Default: `NULL`
+#' @return Integer vector containing 1-based indices of points to keep from the original xy matrix. Length of result will be ≤ nrow(xy).
+#' @details
+#' This function implements greedy sequential spatial thinning with grid-based optimization:
+#' \enumerate{
+#'   \item Extracts x and y coordinates from input matrix
+#'   \item **Builds uniform grid spatial index** (cell_size = distance)
+#'   \item Assigns each point to a grid cell (O(n) preprocessing)
+#'   \item Iterates through points sequentially from first to last
+#'   \item For each retained point i:
+#'     \itemize{
+#'       \item Identifies 3×3 grid neighborhood (9 cells max)
+#'       \item Only checks points within these cells (typically 10-100 points vs 15,000+)
+#'       \item Removes points within rectangular neighborhood
+#'     }
+#'   \item Returns 1-based indices of all retained points
+#' }
+#'
+#' The algorithm is order-dependent: it always keeps the first point in each neighborhood.
+#' The rectangular neighborhood (Manhattan-style) is computationally efficient compared to
+#' circular (Euclidean) neighborhoods while providing similar spatial distribution.
+#'
+#' **Guarantees:** No two retained points will be within distance of each other
+#' in BOTH x and y dimensions simultaneously.
+#'
+#' **Performance (Optimized):**
+#' - Time complexity: O(n + m × k) where m = kept points, k = points per cell (typically 10-100)
+#' - Space complexity: O(n) for tracking kept/removed status + grid index
+#' - **Speedup: 10-50× faster than original O(n²) implementation**
+#' - For 30k points: < 0.05 seconds (vs ~1 second for original)
+#'
+#' **Optimization Strategy:**
+#' - Grid cell size = distance ensures neighbors are in adjacent cells only
+#' - 3×3 cell neighborhood search reduces comparisons by ~500× (15k → 27 points)
+#' - Early termination when no points removed in neighborhood
+#'
+#' **Edge cases:**
+#' - distance = 0: Returns all indices (no thinning, no grid built)
+#' - distance very large: May return only index 1
+#' - Empty xy: Returns empty integer vector
+#'
+#' @examples
+#' # Create grid of points
+#' xy <- as.matrix(expand.grid(x = 0:100, y = 0:100))  # 10,201 points
+#'
+#' # Thin to minimum distance of 5 units (optimized version)
+#' system.time({
+#'   kept_indices <- thinning_to_distance(
+#'     xy = xy,
+#'     distance = 5
+#'   )
+#' })
+#'
+#' # Compare with original (much slower for large datasets)
+#' system.time({
+#'   kept_indices_orig <- thinning_to_distance(
+#'     xy = xy,
+#'     distance = 5
+#'   )
+#' })
+#'
+#' # Visualize results
+#' plot(xy, col = "gray", pch = 16)
+#' points(xy[kept_indices, ], col = "red", pch = 19, cex = 1.5)
+#' @export
+thinning_to_distance <- function(xy, distance) {
+    .Call(`_spatialFolds_thinning_to_distance`, xy, distance)
+}
+
+#' (C++) Apply Iterative Spatial Thinning Until Target Count Reached (Optimized with Binary Search)
+#' @description Applies spatial thinning with progressively increasing minimum distance until the result contains approximately the target number of points. **Optimized version** using binary search instead of linear iteration for 5-10× fewer iterations.
+#' @param xy (required, numeric matrix) Two columns matrix with the locations. The first column is interpreted as "x" (longitude) and the second as "y" (latitude). Default: `NULL`
+#' @param target (required, integer) Target number of points to retain. Must be between 1 and nrow(xy). The result will have ≤ target points (exact count not guaranteed). Default: `NULL`
+#' @return Integer vector containing 1-based indices of points to keep from the original xy matrix. Length of result will be ≤ target.
+#' @details
+#' This function implements **binary search** on distance to reach target count:
+#' \enumerate{
+#'   \item Validates that target is between 1 and nrow(xy)
+#'   \item If target equals nrow(xy), returns all indices without thinning
+#'   \item Calculates bounding box diagonal for search bounds
+#'   \item **Binary search on distance:**
+#'         \itemize{
+#'           \item Initialize: distance_low = 0, distance_high = diagonal
+#'           \item While (distance_high - distance_low > tolerance):
+#'           \item   Try distance_mid = (distance_low + distance_high) / 2
+#'           \item   Call thinning_to_distance(xy, distance_mid)
+#'           \item   If result.size() > target: increase distance_low
+#'           \item   Else: decrease distance_high
+#'           \item Return final result with distance_high (ensures ≤ target)
+#'         }
+#'   \item Tolerance = diagonal / 10000 (0.01% precision)
+#'   \item Typical iterations: **10-15** instead of 50-100 in linear version
+#' }
+#'
+#' **Performance (Optimized):**
+#' - Time complexity: O(log k × (n + m × c)) where:
+#'   - k = search space (diagonal / tolerance) ≈ 10,000
+#'   - n = total points
+#'   - m = kept points per iteration
+#'   - c = points per grid cell (typically 10-100)
+#' - **Iterations: 10-15** (vs 50-100 in linear version)
+#' - **Combined with grid indexing: 75-1000× total speedup**
+#' - For 30k → 200 points: **< 0.1 seconds** (vs ~10 seconds for original)
+#'
+#' **Result characteristics:**
+#' - Result will have ≤ target points (may be fewer, never more)
+#' - Cannot guarantee exact count due to greedy algorithm behavior
+#' - Well-distributed points across spatial extent
+#' - **May differ slightly from linear version** due to different search sequence
+#'   (but still respects distance and target constraints)
+#'
+#' **Optimization Strategy:**
+#' - Binary search reduces iterations from O(k) to O(log k): 50-100 → 10-15
+#' - Each iteration uses grid-indexed thinning (10-50× faster)
+#' - Combined speedup: **75-1000× over original implementation**
+#'
+#' **Safety limits:**
+#' - Maximum iterations: Based on tolerance (typically ~15)
+#' - Guaranteed termination when distance_high - distance_low < tolerance
+#' - Early exit if only 1 point remains
+#'
+#' **Edge cases:**
+#' - target = nrow(xy): Returns all indices without thinning
+#' - target = 1: Binary search until 1 point remains
+#' - target > nrow(xy): Warning, returns all indices
+#' - Empty xy: Returns empty integer vector
+#'
+#' @examples
+#' # Create grid of points
+#' xy <- as.matrix(expand.grid(x = 0:100, y = 0:100))  # 10,201 points
+#'
+#' # Thin to approximately 100 points (optimized version)
+#' system.time({
+#'   kept_indices <- thinning_to_target(
+#'     xy = xy,
+#'     target = 100
+#'   )
+#' })
+#' length(kept_indices)  # Will be <= 100
+#'
+#' # Compare performance with different target values
+#' system.time({
+#'   kept_indices_small <- thinning_to_target(
+#'     xy = xy,
+#'     target = 50
+#'   )
+#' })
+#'
+#' # Visualize results
+#' plot(xy, col = "gray", pch = 16)
+#' points(xy[kept_indices, ], col = "red", pch = 19, cex = 1.5)
+#' @export
+thinning_to_target <- function(xy, target) {
+    .Call(`_spatialFolds_thinning_to_target`, xy, target)
 }
 

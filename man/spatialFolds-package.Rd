@@ -4,9 +4,9 @@
 \name{spatialFolds-package}
 \alias{spatialFolds}
 \alias{spatialFolds-package}
-\title{spatialFolds: Cohesive training and testing folds for spatial cross-validation}
+\title{spatialFolds: Fast Spatial Data-Splitting and Thinning}
 \description{
-Generates training and testing folds for spatial cross-validation preserving the spatial structure of the data.
+Fast tools for spatial cross-validation and spatial thinning of point data, powered by C++ via 'Rcpp'. Generates training and testing folds (Roberts et al. 2017 \doi{10.1111/ecog.02881}) using three methods: contiguous (rectangle-growing from distributed centers), blocks (grid-cell selection), and random (traditional splitting). Introduces a novel contiguous method that preserves spatial structure by growing rectangular folds from well-distributed center points. Provides spatial thinning to reduce point density while maintaining spatial coverage. Integrates with 'tidymodels' via 'rsample'-compatible resampling objects for use with model tuning workflows. Supports parallel execution via 'future' and progress tracking via 'progressr'.
 }
 \author{
 \strong{Maintainer}: First Last \email{blasbenito@gmail.com}
