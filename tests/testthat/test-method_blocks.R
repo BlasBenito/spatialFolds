@@ -6,8 +6,7 @@ test_that("blocks are selected as whole units (all or nothing)", {
 
   block_id <- block_ids(
     df = xy_sf,
-    rows = 10,
-    cols = 10
+    blocks = c(10, 10)
   )
 
   xy <- cast_sf_to_xy(df = xy_sf)
@@ -39,8 +38,7 @@ test_that("reproducibility: same seed produces identical results", {
 
   block_id <- block_ids(
     df = xy_sf,
-    rows = 10,
-    cols = 10
+    blocks = c(10, 10)
   )
 
   xy <- cast_sf_to_xy(df = xy_sf)
@@ -67,8 +65,7 @@ test_that("different seeds produce different results", {
 
   block_id <- block_ids(
     df = xy_sf,
-    rows = 10,
-    cols = 10
+    blocks = c(10, 10)
   )
 
   xy <- cast_sf_to_xy(df = xy_sf)
@@ -95,8 +92,7 @@ test_that("count meets or exceeds target (block granularity)", {
 
   block_id <- block_ids(
     df = xy_sf,
-    rows = 10,
-    cols = 10
+    blocks = c(10, 10)
   )
 
   xy <- cast_sf_to_xy(df = xy_sf)
@@ -121,8 +117,7 @@ test_that("count matches sum of selected blocks' sizes", {
 
   block_id <- block_ids(
     df = xy_sf,
-    rows = 10,
-    cols = 10
+    blocks = c(10, 10)
   )
 
   xy <- cast_sf_to_xy(df = xy_sf)
@@ -178,8 +173,7 @@ test_that("edge case: target > n selects all points", {
 
   block_id <- block_ids(
     df = xy_sf,
-    rows = 10,
-    cols = 10
+    blocks = c(10, 10)
   )
 
   xy <- cast_sf_to_xy(df = xy_sf)
@@ -202,8 +196,7 @@ test_that("output has correct length and type", {
 
   block_id <- block_ids(
     df = xy_sf,
-    rows = 10,
-    cols = 10
+    blocks = c(10, 10)
   )
 
   xy <- cast_sf_to_xy(df = xy_sf)
@@ -226,10 +219,10 @@ test_that("different block configurations affect selection patterns", {
   xy <- cast_sf_to_xy(df = xy_sf)
 
   # Coarse grid (few large blocks)
-  block_id_coarse <- block_ids(df = xy_sf, rows = 5, cols = 5)
+  block_id_coarse <- block_ids(df = xy_sf, blocks = c(5, 5))
 
   # Fine grid (many small blocks)
-  block_id_fine <- block_ids(df = xy_sf, rows = 20, cols = 20)
+  block_id_fine <- block_ids(df = xy_sf, blocks = c(20, 20))
 
   result_coarse <- method_blocks(
     xy = xy,

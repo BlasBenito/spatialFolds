@@ -34,7 +34,7 @@ test_that("training_mask() works with blocks method", {
   data(xy_sf)
 
   xy <- cast_sf_to_xy(xy_sf)
-  block_id <- block_ids(xy_sf, rows = 10, cols = 10)
+  block_id <- block_ids(xy_sf, blocks = c(10, 10))
 
   result <- training_mask(
     xy = xy,

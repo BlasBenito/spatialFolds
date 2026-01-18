@@ -4,10 +4,10 @@
 \alias{cast_sf_to_bbox}
 \title{Convert sf Object to Bounding Box sf Object}
 \usage{
-cast_sf_to_bbox(sf = NULL, ...)
+cast_sf_to_bbox(x = NULL, ...)
 }
 \arguments{
-\item{sf}{(required, sf) Spatial dataframe with point geometries. Default: \code{NULL}}
+\item{x}{(required, sf) Spatial dataframe with point geometries. Default: \code{NULL}}
 
 \item{...}{Internal parameters passed from parent functions.}
 }

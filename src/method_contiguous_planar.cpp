@@ -97,8 +97,9 @@ LogicalVector method_contiguous_planar(
   double scale_max = std::max(max_dx / step_x, max_dy / step_y) + 1.0;
 
   // Binary search for correct scale
+  // Use relative tolerance to handle both small and large scales correctly
   double final_scale = scale_max;
-  while (scale_max - scale_min > 0.01) {
+  while ((scale_max - scale_min) / (scale_max + 1e-10) > 0.0001) {
     double scale_mid = (scale_min + scale_max) / 2.0;
 
     double x_min = center_x - scale_mid * step_x;

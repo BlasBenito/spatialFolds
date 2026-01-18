@@ -1,6 +1,6 @@
 #' Convert sf Object to Bounding Box sf Object
 #' @description Extracts the bounding box from an sf object and returns it as a one-row sf dataframe containing a rectangular polygon.
-#' @param sf (required, sf) Spatial dataframe with point geometries. Default: `NULL`
+#' @param x (required, sf) Spatial dataframe with point geometries. Default: `NULL`
 #' @return One-row sf dataframe containing a rectangular polygon representing the bounding box of the input. Has the same CRS as input.
 #' @details
 #' This function:
@@ -34,7 +34,7 @@
 #' @family utilities
 #' @autoglobal
 #' @export
-cast_sf_to_bbox <- function(sf = NULL, ...) {
+cast_sf_to_bbox <- function(x = NULL, ...) {
   # ==========================================================================
   # Function name for hierarchical error messages
   # ==========================================================================
@@ -45,29 +45,29 @@ cast_sf_to_bbox <- function(sf = NULL, ...) {
   )
 
   # Validate input
-  if (is.null(sf)) {
+  if (is.null(x)) {
     stop(
-      function_name, ": argument 'sf' cannot be NULL.",
+      function_name, ": argument 'x' cannot be NULL.",
       call. = FALSE
     )
   }
 
-  if (!inherits(sf, "sf")) {
+  if (!inherits(x, "sf")) {
     stop(
-      function_name, ": argument 'sf' must be an sf object.",
+      function_name, ": argument 'x' must be an sf object.",
       call. = FALSE
     )
   }
 
-  if (nrow(sf) == 0) {
+  if (nrow(x) == 0) {
     stop(
-      function_name, ": argument 'sf' has no rows.",
+      function_name, ": argument 'x' has no rows.",
       call. = FALSE
     )
   }
 
   # Extract bounding box
-  bbox <- sf::st_bbox(sf)
+  bbox <- sf::st_bbox(x)
 
   # Convert to sfc (simple feature geometry collection)
   bbox_sfc <- sf::st_as_sfc(bbox)

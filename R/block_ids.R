@@ -85,6 +85,13 @@ block_ids <- function(
   cell_width <- (x_max - x_min) / cols
   cell_height <- (y_max - y_min) / rows
 
+  xy <- cast_sf_to_xy(
+    df = df
+  )
+
+  x_coords <- xy[, "x"]
+  y_coords <- xy[, "y"]
+
   # Vectorized cell assignment
   # Column index: which column (0 to cols - 1)
   col_indices <- floor((x_coords - x_min) / cell_width)

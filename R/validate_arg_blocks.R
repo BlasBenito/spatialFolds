@@ -56,24 +56,21 @@ validate_arg_blocks <- function(
   )
 
   # ==========================================================================
-  # Validate xy matrix
+  # Validate sf input
   # ==========================================================================
   df <- validate_arg_sf(
     df = df,
     function_name = function_name
   )
 
-  xy <- cast_sf_to_xy(
-    df = df,
-    function_name = function_name
-  )
+  # ==========================================================================
+  # Compute derived values from bounding box
+  # ==========================================================================
+  n_points <- nrow(df)
 
-  # ==========================================================================
-  # Compute derived values from xy
-  # ==========================================================================
-  n_points <- nrow(xy)
-  x_range <- diff(range(xy[, 1], na.rm = TRUE))
-  y_range <- diff(range(xy[, 2], na.rm = TRUE))
+  df_bbox <- sf::st_bbox(obj = df)
+  x_range <- df_bbox["xmax"] - df_bbox["xmin"]
+  y_range <- df_bbox["ymax"] - df_bbox["ymin"]
 
   rows <- NULL
   cols <- NULL
@@ -119,24 +116,24 @@ validate_arg_blocks <- function(
     )
   }
 
-  # Warn if grid has more cells than points
-  if (rows * cols > nrow(df)) {
-    warning(
-      function_name,
-      ": Grid has more cells (",
-      rows * cols,
-      ") than data points (",
-      nrow(df),
-      "). Many cells will be empty.",
-      call. = FALSE
-    )
-  }
-
   # Calculate rows/cols from n_blocks using aspect ratio
   if (!is.null(n_blocks)) {
     aspect_ratio <- x_range / y_range
     rows <- max(2, round(sqrt(n_blocks / aspect_ratio)))
     cols <- max(2, round(sqrt(n_blocks * aspect_ratio)))
+  }
+
+  # Warn if grid has more cells than points
+  if (rows * cols > n_points) {
+    warning(
+      function_name,
+      ": Grid has more cells (",
+      rows * cols,
+      ") than data points (",
+      n_points,
+      "). Many cells will be empty.",
+      call. = FALSE
+    )
   }
 
   out <- list(

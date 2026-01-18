@@ -54,16 +54,27 @@ LogicalVector method_blocks(
   int n = xy.nrow();
   int target_int = static_cast<int>(target);
 
-  // Find maximum cell ID to determine number of cells
+  // Validate block_id length matches xy
+  if (block_id.size() != n) {
+    stop("method_blocks: block_id length (%d) must match nrow(xy) (%d)",
+         block_id.size(), n);
+  }
+
+  // Find maximum cell ID and validate bounds
   int max_block_id = 0;
   for (int i = 0; i < n; i++) {
+    if (block_id[i] < 0) {
+      stop("method_blocks: invalid block_id value %d at index %d (must be >= 0)",
+           block_id[i], i + 1);  // i + 1 for R's 1-based reporting
+    }
     if (block_id[i] > max_block_id) {
       max_block_id = block_id[i];
     }
   }
-  int total_cells = max_block_id + 1;  // Assuming 0-based cell IDs
+  int total_cells = max_block_id + 1;  // 0-based cell IDs
 
   // Pass 1: Count points per cell from pre-computed block_id
+  // (bounds already validated above, safe to use as array index)
   std::vector<int> cell_counts(total_cells, 0);
   for (int i = 0; i < n; i++) {
     cell_counts[block_id[i]]++;
