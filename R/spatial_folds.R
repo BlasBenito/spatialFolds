@@ -217,14 +217,14 @@ spatial_folds <- function(
   rows <- NULL
   cols <- NULL
   if ("blocks" %in% methods) {
-    blocks_validated <- validate_arg_blocks(
+    blocks <- validate_arg_blocks(
       blocks = blocks,
-      xy = xy,
+      df = df,
       quiet = quiet,
       function_name = function_name
     )
-    rows <- blocks_validated$rows
-    cols <- blocks_validated$cols
+    rows <- blocks$rows
+    cols <- blocks$cols
   }
 
   # Auto-detect spherical geometry if not specified

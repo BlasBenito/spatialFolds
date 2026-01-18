@@ -25,6 +25,10 @@ validate_arg_sf <- function(
   df = NULL,
   function_name = NULL
 ) {
+  if (!is.null(attributes(df)$validated)) {
+    return(df)
+  }
+
   function_name <- collinear::validate_arg_function_name(
     default_name = "spatialFolds::validate_arg_sf()",
     function_name = function_name
@@ -56,6 +60,11 @@ validate_arg_sf <- function(
       function_name = function_name
     )
   }
+
+  attr(
+    x = df,
+    which = "validated"
+  ) <- TRUE
 
   df
 }

@@ -4,9 +4,14 @@
 #' Assigns points in an sf object to a regular grid cells (blocks), returning 0-based block IDs. Used for pre-computing block assignments for [method_blocks()] to avoid recalculation across iterations.
 #'
 #' @param df (required, sf dataframe) Spatial dataframe with point geometries. Default: NULL
-#' @param rows (required, integer) Number of grid rows (must be >= 2). Default: 3
-#' @param cols (required, integer) Number of grid columns (must be >= 2). Default: 3
-#'
+#' @param blocks (optional, NULL, integer, or vector) Grid configuration for
+#'   blocks method. If NULL: auto-computed as floor(n_points/30), creating ~30
+#'   samples per block. If a single integer: number of blocks (minimum 4),
+#'   auto-arranged by aspect ratio to create roughly square blocks in geographic
+#'   space. If a length-2 vector: c(rows, cols) for direct grid control.
+#'   Default: NULL
+#' @param quiet (optional, logical) If FALSE, messages are printed.
+#'   Default: FALSE
 #' @return Integer vector of length nrow(df) with 0-based cell IDs. Cell 0 is top-left, numbering increases left-to-right then top-to-bottom (row-major order).
 #'
 #' @details
@@ -43,90 +48,38 @@
 #' @noRd
 block_ids <- function(
   df = NULL,
-  rows = NULL,
-  cols = NULL,
-  function_name = NULL
+  blocks = NULL,
+  function_name = NULL,
+  quiet = FALSE
 ) {
-  # ==========================================================================
-  # Function name for hierarchical error messages
-  # ==========================================================================
   function_name <- collinear::validate_arg_function_name(
     default_name = "spatialFolds::block_ids()",
     function_name = function_name
   )
 
-  # Validate rows
-  if (!is.numeric(rows) || length(rows) != 1) {
-    stop(
-      function_name, ": argument 'rows' must be a single numeric value.",
-      call. = FALSE
-    )
-  }
+  df <- validate_arg_sf(
+    df = df,
+    function_name = function_name
+  )
 
-  rows <- as.integer(rows)
+  blocks <- validate_arg_blocks(
+    blocks = blocks,
+    df = df,
+    quiet = quiet,
+    function_name = function_name
+  )
 
-  if (rows < 2) {
-    stop(
-      function_name, ": argument 'rows' must be >= 2.",
-      call. = FALSE
-    )
-  }
+  rows <- blocks$rows
+  cols <- blocks$cols
 
-  # Validate cols
-  if (!is.numeric(cols) || length(cols) != 1) {
-    stop(
-      function_name, ": argument 'cols' must be a single numeric value.",
-      call. = FALSE
-    )
-  }
-
-  cols <- as.integer(cols)
-
-  if (cols < 2) {
-    stop(
-      function_name, ": argument 'cols' must be >= 2.",
-      call. = FALSE
-    )
-  }
-
-  # Warn if grid has more cells than points
-  if (rows * cols > nrow(df)) {
-    warning(
-      function_name, ": Grid has more cells (",
-      rows * cols,
-      ") than data points (",
-      nrow(df),
-      "). Many cells will be empty.",
-      call. = FALSE
-    )
-  }
-
-  # Extract coordinates as matrix
-  xy <- cast_sf_to_xy(df = df, function_name = function_name)
-
-  x_coords <- xy[, "x"]
-  y_coords <- xy[, "y"]
+  #bounding box
+  df_bbox <- sf::st_bbox(obj = df)
 
   # Calculate bounding box
-  x_min <- min(x_coords)
-  x_max <- max(x_coords)
-  y_min <- min(y_coords)
-  y_max <- max(y_coords)
-
-  # Validate non-zero ranges
-  if (x_max == x_min) {
-    stop(
-      function_name, ": All x coordinates are identical. Cannot create grid.",
-      call. = FALSE
-    )
-  }
-
-  if (y_max == y_min) {
-    stop(
-      function_name, ": All y coordinates are identical. Cannot create grid.",
-      call. = FALSE
-    )
-  }
+  x_min <- df_bbox["xmin"]
+  x_max <- df_bbox["xmax"]
+  y_min <- df_bbox["ymin"]
+  y_max <- df_bbox["ymax"]
 
   # Calculate cell dimensions
   cell_width <- (x_max - x_min) / cols
@@ -156,14 +109,16 @@ block_ids <- function(
   # Validate output
   if (any(block_id < 0)) {
     stop(
-      function_name, ": Internal error - negative cell IDs produced.",
+      function_name,
+      ": Internal error - negative cell IDs produced.",
       call. = FALSE
     )
   }
 
   if (any(block_id >= rows * cols)) {
     stop(
-      function_name, ": Internal error - cell IDs exceed grid size.",
+      function_name,
+      ": Internal error - cell IDs exceed grid size.",
       call. = FALSE
     )
   }

@@ -11,8 +11,9 @@
 #'   auto-arranged by aspect ratio to create roughly square blocks in geographic
 #'   space. If a length-2 vector: c(rows, cols) for direct grid control.
 #'   Default: NULL
-#' @param xy (required, matrix or data.frame) Coordinate matrix with x/y columns.
-#'   Default: NULL
+#' @param df (required, sf or data.frame) Spatial data with point geometries.
+#'   If data.frame, must have recognizable coordinate columns (x/lon/longitude
+#'   and y/lat/latitude). Will be converted to sf with CRS 4326. Default: NULL
 #' @param quiet (optional, logical) If FALSE, messages are printed.
 #'   Default: FALSE
 #' @param function_name (optional, character) Name of the calling function
@@ -39,10 +40,13 @@
 #' @noRd
 validate_arg_blocks <- function(
   blocks = NULL,
-  xy = NULL,
+  df = NULL,
   quiet = FALSE,
   function_name = NULL
 ) {
+  if (!is.null(attributes(blocks)$validated)) {
+    return(blocks)
+  }
   # ==========================================================================
   # Function name for hierarchical error messages
   # ==========================================================================
@@ -54,8 +58,13 @@ validate_arg_blocks <- function(
   # ==========================================================================
   # Validate xy matrix
   # ==========================================================================
-  xy <- validate_arg_xy(
-    xy = xy,
+  df <- validate_arg_sf(
+    df = df,
+    function_name = function_name
+  )
+
+  xy <- cast_sf_to_xy(
+    df = df,
     function_name = function_name
   )
 
@@ -77,21 +86,26 @@ validate_arg_blocks <- function(
     # Integer case: number of blocks
     if (!is.numeric(blocks)) {
       stop(
-        function_name, ": argument 'blocks' must be NULL, numeric, or a length-2 vector c(rows, cols).",
+        function_name,
+        ": argument 'blocks' must be NULL, numeric, or a length-2 vector c(rows, cols).",
         call. = FALSE
       )
     }
     n_blocks <- max(4, as.integer(blocks))
     if (!quiet) {
       message(
-        function_name, ": using ", n_blocks, " blocks for the 'blocks' method."
+        function_name,
+        ": using ",
+        n_blocks,
+        " blocks for the 'blocks' method."
       )
     }
   } else if (length(blocks) == 2) {
     # Vector case: direct rows/cols specification
     if (!is.numeric(blocks)) {
       stop(
-        function_name, ": argument 'blocks' must be NULL, numeric, or a length-2 vector c(rows, cols).",
+        function_name,
+        ": argument 'blocks' must be NULL, numeric, or a length-2 vector c(rows, cols).",
         call. = FALSE
       )
     }
@@ -99,7 +113,21 @@ validate_arg_blocks <- function(
     cols <- max(2, as.integer(blocks[2]))
   } else {
     stop(
-      function_name, ": argument 'blocks' must be NULL, an integer, or a length-2 vector c(rows, cols).",
+      function_name,
+      ": argument 'blocks' must be NULL, an integer, or a length-2 vector c(rows, cols).",
+      call. = FALSE
+    )
+  }
+
+  # Warn if grid has more cells than points
+  if (rows * cols > nrow(df)) {
+    warning(
+      function_name,
+      ": Grid has more cells (",
+      rows * cols,
+      ") than data points (",
+      nrow(df),
+      "). Many cells will be empty.",
       call. = FALSE
     )
   }
@@ -111,8 +139,15 @@ validate_arg_blocks <- function(
     cols <- max(2, round(sqrt(n_blocks * aspect_ratio)))
   }
 
-  list(
+  out <- list(
     rows = rows,
     cols = cols
   )
+
+  attr(
+    x = out,
+    which = "validated"
+  ) <- TRUE
+
+  out
 }
