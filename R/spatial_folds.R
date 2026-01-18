@@ -208,7 +208,7 @@ spatial_folds <- function(
 
   set.seed(seed)
 
-  # Calculate coordinate ranges (xy already extracted by validate_arg_sf)
+  # Calculate coordinate ranges and n_points
   x_range <- diff(range(xy[, "x"]))
   y_range <- diff(range(xy[, "y"]))
   n_points <- nrow(xy)
@@ -219,9 +219,7 @@ spatial_folds <- function(
   if ("blocks" %in% methods) {
     blocks_validated <- validate_arg_blocks(
       blocks = blocks,
-      n_points = n_points,
-      x_range = x_range,
-      y_range = y_range,
+      xy = xy,
       quiet = quiet,
       function_name = function_name
     )
@@ -230,7 +228,8 @@ spatial_folds <- function(
   }
 
   # Auto-detect spherical geometry if not specified
-  if ("contiguous" %in% methods && is.null(spherical)) {
+  spherical <- FALSE
+  if ("contiguous" %in% methods) {
     spherical <- utils_needs_spherical(xy)
     if (spherical && !quiet) {
       message(
@@ -275,84 +274,50 @@ spatial_folds <- function(
     step_y <- y_range / 1000
   }
 
-  iterations_list <- list()
-  counter <- 0
-  center_counter <- 0
-  combo_counter <- list()
+  # Generate all method/fraction/repetition combinations
+  base_grid <- expand.grid(
+    rep = seq_len(repetitions),
+    training_fraction = training_fraction,
+    method = methods,
+    stringsAsFactors = FALSE
+  )
 
-  for (method in methods) {
-    for (fraction in training_fraction) {
-      # Format fraction once per combination
-      fraction_str <- format(fraction, nsmall = 2, trim = TRUE)
-      key <- paste0(method, "_", fraction_str)
+  # Build iterations_df with derived columns
+  n_iter <- nrow(base_grid)
+  iterations_df <- data.frame(
+    iteration = seq_len(n_iter),
+    method = base_grid$method,
+    training_fraction = base_grid$training_fraction,
+    seed = seed + seq_len(n_iter),
+    target = as.integer(base_grid$training_fraction * n_points),
+    center = NA_integer_,
+    step_x = NA_real_,
+    step_y = NA_real_,
+    stringsAsFactors = FALSE
+  )
 
-      for (i in 1:repetitions) {
-        counter <- counter + 1
+  # Generate column names with per-combo repetition counter
+  fraction_str <- format(
+    iterations_df$training_fraction,
+    nsmall = 2,
+    trim = TRUE
+  )
+  combo_key <- paste0(iterations_df$method, "_", fraction_str)
+  iterations_df$column_name <- paste0(
+    combo_key,
+    "_",
+    stats::ave(seq_len(n_iter), combo_key, FUN = seq_along)
+  )
 
-        # Update combo counter
-        if (is.null(combo_counter[[key]])) {
-          combo_counter[[key]] <- 1
-        } else {
-          combo_counter[[key]] <- combo_counter[[key]] + 1
-        }
-
-        # Generate column name
-        column_name <- paste0(key, "_", combo_counter[[key]])
-
-        target <- as.integer(fraction * n_points)
-        iteration_seed <- seed + counter
-
-        if (method == "contiguous") {
-          center_counter <- center_counter + 1
-          center_idx <- center_indices[center_counter]
-
-          row <- data.frame(
-            iteration = counter,
-            method = "contiguous",
-            training_fraction = fraction,
-            seed = iteration_seed,
-            target = target,
-            center = center_idx,
-            step_x = step_x,
-            step_y = step_y,
-            column_name = column_name,
-            stringsAsFactors = FALSE
-          )
-        } else if (method == "random") {
-          row <- data.frame(
-            iteration = counter,
-            method = "random",
-            training_fraction = fraction,
-            seed = iteration_seed,
-            target = target,
-            center = NA_integer_,
-            step_x = NA_real_,
-            step_y = NA_real_,
-            column_name = column_name,
-            stringsAsFactors = FALSE
-          )
-        } else if (method == "blocks") {
-          row <- data.frame(
-            iteration = counter,
-            method = "blocks",
-            training_fraction = fraction,
-            seed = iteration_seed,
-            target = target,
-            center = NA_integer_,
-            step_x = NA_real_,
-            step_y = NA_real_,
-            column_name = column_name,
-            stringsAsFactors = FALSE
-          )
-        }
-
-        iterations_list[[counter]] <- row
-      }
-    }
+  # Fill contiguous-specific columns
+  contiguous_rows <- which(iterations_df$method == "contiguous")
+  if (length(contiguous_rows) > 0) {
+    iterations_df$center[contiguous_rows] <- center_indices[seq_along(
+      contiguous_rows
+    )]
+    iterations_df$step_x[contiguous_rows] <- step_x
+    iterations_df$step_y[contiguous_rows] <- step_y
   }
-
-  # Combine into single dataframe
-  iterations_df <- do.call(rbind, iterations_list)
 
   total_iterations <- nrow(iterations_df)
   p <- progressr::progressor(steps = total_iterations)

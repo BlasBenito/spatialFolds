@@ -9,6 +9,7 @@ spatial_thinning(
   method = c("distance", "target"),
   distance = NULL,
   target = NULL,
+  seed = 1,
   ...
 )
 }
@@ -20,6 +21,9 @@ spatial_thinning(
 \item{distance}{(required for method="distance", numeric) Minimum distance between retained points in both x and y dimensions. Points within a rectangle of ±distance will be removed. Must be in same units as coordinates. When NULL, auto-calculated as 0.5 × √(bbox_area / n). Use explicit values when you know the desired spacing. Default: \code{NULL} (auto-calculated)}
 
 \item{target}{(required for method="target", integer) Target number of points to retain. Result will have <= target points (exact count not guaranteed). Must be between 1 and nrow(df). Default: \code{NULL}}
+
+\item{seed}{(optional, integer) Random seed for reproducibility. Each
+repetition gets unique seed derived from this base seed. Default: 1}
 
 \item{...}{Internal parameters passed from parent functions.}
 }

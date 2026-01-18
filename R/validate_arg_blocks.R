@@ -11,11 +11,7 @@
 #'   auto-arranged by aspect ratio to create roughly square blocks in geographic
 #'   space. If a length-2 vector: c(rows, cols) for direct grid control.
 #'   Default: NULL
-#' @param n_points (required, integer) Number of points in the dataset.
-#'   Default: NULL
-#' @param x_range (required, numeric) Range of x coordinates.
-#'   Default: NULL
-#' @param y_range (required, numeric) Range of y coordinates.
+#' @param xy (required, matrix or data.frame) Coordinate matrix with x/y columns.
 #'   Default: NULL
 #' @param quiet (optional, logical) If FALSE, messages are printed.
 #'   Default: FALSE
@@ -31,6 +27,8 @@
 #' @details
 #' Validation steps performed in order:
 #' \enumerate{
+#'   \item Validate xy matrix using validate_arg_xy()
+#'   \item Compute n_points, x_range, y_range from xy
 #'   \item If blocks is NULL: auto-compute n_blocks as max(4, floor(n_points/30))
 #'   \item If blocks is length 1: use as n_blocks (minimum 4)
 #'   \item If blocks is length 2: use as c(rows, cols) directly (minimum 2 each)
@@ -41,9 +39,7 @@
 #' @noRd
 validate_arg_blocks <- function(
   blocks = NULL,
-  n_points = NULL,
-  x_range = NULL,
-  y_range = NULL,
+  xy = NULL,
   quiet = FALSE,
   function_name = NULL
 ) {
@@ -54,6 +50,21 @@ validate_arg_blocks <- function(
     default_name = "spatialFolds::validate_arg_blocks()",
     function_name = function_name
   )
+
+  # ==========================================================================
+  # Validate xy matrix
+  # ==========================================================================
+  xy <- validate_arg_xy(
+    xy = xy,
+    function_name = function_name
+  )
+
+  # ==========================================================================
+  # Compute derived values from xy
+  # ==========================================================================
+  n_points <- nrow(xy)
+  x_range <- diff(range(xy[, 1], na.rm = TRUE))
+  y_range <- diff(range(xy[, 2], na.rm = TRUE))
 
   rows <- NULL
   cols <- NULL

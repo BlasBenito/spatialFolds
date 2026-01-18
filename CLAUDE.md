@@ -93,7 +93,9 @@ testthat::test_file("tests/testthat/test-....R")
 
 9. **Preserve existing code architecture when making changes** — When fixing bugs or adding features, follow the patterns already established in the codebase. Don't refactor unrelated code or introduce new dependencies unless explicitly requested.
 
-10. **Run devtools::check() and testthat before considering a task complete** — Verify that changes pass R CMD check with no errors or warnings, and that existing tests still pass. Flag any new test failures immediately rather than waiting for me to discover them.
+10. **Run the test file immediately after modifying a function** — After editing any R or C++ function, run its corresponding test file with `devtools::test_file("tests/testthat/test-<function_name>.R")` to catch regressions early.
+
+11. **Run devtools::check() and testthat before considering a task complete** — Verify that changes pass R CMD check with no errors or warnings, and that existing tests still pass. Flag any new test failures immediately rather than waiting for me to discover them.
 
 ## Documentation System
 
@@ -115,6 +117,50 @@ testthat::test_file("tests/testthat/test-....R")
 - Uses testthat edition 3 (`Config/testthat/edition: 3`)
 - Spelling tests in `tests/spelling.R`
 - Run individual test: `testthat::test_file("tests/testthat/test-*.R")`
+
+## Testing Philosophy
+
+**Core principles:**
+- Every test must be able to fail when the code is broken
+- Tests must verify behavior, not just type/structure
+- Ask: "Would this test still pass if I replaced the function body with a hardcoded return?"
+
+**Required elements for each test file:**
+1. **Behavior verification** - Test what the function *does*, not just what it *returns*
+2. **Edge cases** - Empty input, single element, boundary conditions
+3. **Reproducibility** - Same seed = same result (for random functions)
+4. **Algorithm-specific checks** - Verify the core algorithm property
+
+**Banned patterns:**
+- `expect_true(is.logical(x))` alone without behavior checks
+- `expect_no_error()` without verifying the result
+- Tests that only check output dimensions
+- `expect_true(sum(x) >= target)` without verifying HOW the target was reached
+
+**Good test patterns:**
+```r
+# Verify reproducibility (random functions)
+result1 <- method_random(xy, seed = 1, target = 100)
+result2 <- method_random(xy, seed = 1, target = 100)
+expect_identical(result1, result2)
+
+# Verify different inputs produce different outputs
+result3 <- method_random(xy, seed = 999, target = 100)
+expect_false(identical(result1, result3))
+
+# Verify algorithm property (e.g., blocks selected as units)
+for (block in unique(block_id)) {
+  mask <- block_id == block
+  expect_true(all(result[mask]) || !any(result[mask]))
+}
+
+# Verify exact count (not just >=)
+expect_equal(sum(result), expected_count)
+
+# Verify geometry property (contiguous rectangle)
+selected_x <- xy[result, "x"]
+expect_true(all(selected_x >= min_x & selected_x <= max_x))
+```
 
 ## Package Dependencies
 

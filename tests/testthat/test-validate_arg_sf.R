@@ -14,27 +14,16 @@ test_that("validate_arg_sf() errors on empty data frame", {
   )
 })
 
-test_that("validate_arg_sf() validates minimum rows", {
+test_that("validate_arg_sf() accepts valid sf with few rows", {
   data(xy_sf)
 
-  # Should error when fewer than min_rows
-  expect_error(
-    validate_arg_sf(
-      df = xy_sf[1:5, ],
-      function_name = "test_fn",
-      min_rows = 10L
-    ),
-    "must have at least 10 rows"
-  )
-
-  # Should pass when at or above min_rows
+  # Should pass with small datasets (no min_rows requirement)
   result <- validate_arg_sf(
-    df = xy_sf[1:10, ],
-    function_name = "test_fn",
-    min_rows = 10L
+    df = xy_sf[1:5, ],
+    function_name = "test_fn"
   )
   expect_s3_class(result, "sf")
-  expect_equal(nrow(result), 10)
+  expect_equal(nrow(result), 5)
 })
 
 test_that("validate_arg_sf() returns sf object for sf input", {
@@ -60,48 +49,29 @@ test_that("validate_arg_sf() converts data.frame to sf", {
   expect_equal(nrow(result), 100)
 })
 
-test_that("validate_arg_sf() validates coordinate ranges when enabled", {
-  # Create data with identical x coordinates
+test_that("validate_arg_sf() accepts data with identical coordinates", {
+  # Identical x coordinates (vertical line) - valid input
+
   df_identical_x <- data.frame(x = rep(0, 100), y = runif(100))
   sf_identical_x <- cast_df_to_sf(df_identical_x)
 
-  expect_error(
-    validate_arg_sf(
-      df = sf_identical_x,
-      function_name = "test_fn",
-      check_coord_range = TRUE
-    ),
-    "All x coordinates are identical"
+  result <- validate_arg_sf(
+    df = sf_identical_x,
+    function_name = "test_fn"
   )
+  expect_s3_class(result, "sf")
 
-  # Create data with identical y coordinates
+  # Identical y coordinates (horizontal line) - valid input
   df_identical_y <- data.frame(x = runif(100), y = rep(0, 100))
   sf_identical_y <- cast_df_to_sf(df_identical_y)
 
-  expect_error(
-    validate_arg_sf(
-      df = sf_identical_y,
-      function_name = "test_fn",
-      check_coord_range = TRUE
-    ),
-    "All y coordinates are identical"
-  )
-})
-
-test_that("validate_arg_sf() skips coordinate range check when disabled", {
-  # Create data with identical x coordinates
-  df_identical_x <- data.frame(x = rep(0, 100), y = runif(100))
-  sf_identical_x <- cast_df_to_sf(df_identical_x)
-
-  # Should NOT error when check_coord_range = FALSE (default)
   result <- validate_arg_sf(
-    df = sf_identical_x,
-    function_name = "test_fn",
-    check_coord_range = FALSE
+    df = sf_identical_y,
+    function_name = "test_fn"
   )
-
   expect_s3_class(result, "sf")
 })
+
 
 test_that("validate_arg_sf() includes function name in error messages", {
   # Test with different function names - check for hierarchical format

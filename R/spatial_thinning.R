@@ -9,6 +9,8 @@
 #' @param method (required, character) Thinning strategy to apply. Must be one of "distance" (fixed minimum distance) or "target" (iterative until the required number of records is achieved). Default: `"distance"`
 #' @param distance (required for method="distance", numeric) Minimum distance between retained points in both x and y dimensions. Points within a rectangle of ±distance will be removed. Must be in same units as coordinates. When NULL, auto-calculated as 0.5 × √(bbox_area / n). Use explicit values when you know the desired spacing. Default: `NULL` (auto-calculated)
 #' @param target (required for method="target", integer) Target number of points to retain. Result will have <= target points (exact count not guaranteed). Must be between 1 and nrow(df). Default: `NULL`
+#' @param seed (optional, integer) Random seed for reproducibility. Each
+#'   repetition gets unique seed derived from this base seed. Default: 1
 #' @return sf object (matching input type) with thinned subset of points. Row order preserved from input.
 #' @details
 #' This function provides two spatial thinning strategies implemented in C++ for performance:
@@ -108,6 +110,7 @@ spatial_thinning <- function(
   method = c("distance", "target"),
   distance = NULL,
   target = NULL,
+  seed = 1,
   ...
 ) {
   # ==========================================================================
@@ -120,16 +123,54 @@ spatial_thinning <- function(
   )
 
   # ==========================================================================
-  # Validate df
+  # Pre-check for edge case: all coordinates identical
+  # Must handle this before validate_arg_sf which would error
   # ==========================================================================
-  input_is_sf <- inherits(df, "sf")
+  if (is.null(df)) {
+    stop(
+      "\n",
+      function_name,
+      ": argument 'df' cannot be NULL.",
+      call. = FALSE
+    )
+  }
+
+  if (!inherits(x = df, what = "sf")) {
+    df <- cast_df_to_sf(
+      df = df,
+      crs = NA,
+      function_name = function_name
+    )
+  }
+
+  # Check for identical coordinates (zero bbox area)
+  bbox <- sf::st_bbox(df)
+  if (bbox["xmin"] == bbox["xmax"] && bbox["ymin"] == bbox["ymax"]) {
+    message(
+      function_name,
+      ": All points at same location. Returning all points with distance = 0."
+    )
+    return(df)
+  }
+
+  # ==========================================================================
+  # Validate df (will check for other edge cases like single-axis identical)
+  # ==========================================================================
   df <- validate_arg_sf(
     df = df,
-    function_name = function_name,
-    min_rows = 0L,
-    check_coord_range = FALSE
+    function_name = function_name
   )
-  xy <- cast_sf_to_xy(df = df, function_name = function_name)
+
+  xy <- cast_sf_to_xy(
+    df = df,
+    function_name = function_name
+  )
+
+  set.seed(as.integer(seed))
+
+  xy.id <- cbind(xy, 1:nrow(xy))
+  colnames(xy.id) <- c("x", "y", "id")
+  xy_reshuffled <- xy.id[sample.int(nrow(xy.id)), ]
 
   method <- match.arg(method)
 
@@ -139,41 +180,30 @@ spatial_thinning <- function(
       # Auto-calculate distance based on bounding box and point density
       # Formula: distance = 0.5 * sqrt(bbox_area / n)
 
-      # Get bounding box as sf object
-      bbox_sf <- cast_sf_to_bbox(df, function_name = function_name)
-
-      # Calculate area (returns units object from sf)
-      bbox_area_units <- sf::st_area(bbox_sf)
-
-      # Convert to numeric (strips units)
-      bbox_area <- as.numeric(bbox_area_units)
+      # Calculate bbox area directly from xy coordinates (faster, no sf dependency)
+      x_range <- diff(range(xy[, "x"]))
+      y_range <- diff(range(xy[, "y"]))
+      bbox_area <- x_range * y_range
 
       # Get number of points
       n_points <- nrow(df)
 
-      # Handle edge case: zero area (all points at same location)
-      if (bbox_area == 0 || bbox_area < .Machine$double.eps) {
-        distance <- 0
-        message(
-          function_name, ": All points at same location. ",
-          "Using distance = 0 (no thinning)."
-        )
-      } else {
-        # Calculate default distance
-        distance <- 0.5 * sqrt(bbox_area / n_points)
+      # Calculate default distance
+      distance <- 0.5 * sqrt(bbox_area / n_points)
 
-        # Inform user
-        message(
-          function_name, ": Auto-calculated distance = ",
-          round(distance, 6),
-          " (based on bounding box area and point density)"
-        )
-      }
+      # Inform user
+      message(
+        function_name,
+        ": Auto-calculated distance = ",
+        round(distance, 6),
+        " (based on bounding box area and point density)"
+      )
     } else {
       # Existing validation for user-provided distance
       if (!is.numeric(distance)) {
         stop(
-          function_name, ": argument 'distance' must be numeric.",
+          function_name,
+          ": argument 'distance' must be numeric.",
           call. = FALSE
         )
       }
@@ -181,7 +211,8 @@ spatial_thinning <- function(
       # Take first value if length > 1
       if (length(distance) > 1) {
         warning(
-          function_name, ": 'distance' has length > 1, using first value.",
+          function_name,
+          ": 'distance' has length > 1, using first value.",
           call. = FALSE
         )
         distance <- distance[1]
@@ -189,7 +220,8 @@ spatial_thinning <- function(
 
       if (distance < 0) {
         stop(
-          function_name, ": argument 'distance' must be >= 0.",
+          function_name,
+          ": argument 'distance' must be >= 0.",
           call. = FALSE
         )
       }
@@ -198,14 +230,16 @@ spatial_thinning <- function(
     # Validate target for "target" method
     if (is.null(target)) {
       stop(
-        function_name, ": argument 'target' is required for method = 'target'.",
+        function_name,
+        ": argument 'target' is required for method = 'target'.",
         call. = FALSE
       )
     }
 
     if (!is.numeric(target)) {
       stop(
-        function_name, ": argument 'target' must be numeric.",
+        function_name,
+        ": argument 'target' must be numeric.",
         call. = FALSE
       )
     }
@@ -214,14 +248,16 @@ spatial_thinning <- function(
 
     if (target < 1) {
       stop(
-        function_name, ": argument 'target' must be >= 1.",
+        function_name,
+        ": argument 'target' must be >= 1.",
         call. = FALSE
       )
     }
 
     if (target > nrow(df)) {
       warning(
-        function_name, ": 'target' exceeds nrow(df), returning all points.",
+        function_name,
+        ": 'target' exceeds nrow(df), returning all points.",
         call. = FALSE
       )
       return(df)
@@ -231,20 +267,23 @@ spatial_thinning <- function(
   result_indices <- switch(
     method,
     distance = thinning_to_distance(
-      xy = xy,
+      xy = xy_reshuffled[, c("x", "y")],
       distance = distance
     ),
     target = thinning_to_target(
-      xy = xy,
+      xy = xy_reshuffled[, c("x", "y")],
       target = target
     )
   )
 
-  result_df <- df[result_indices, ]
+  result_indices <- xy_reshuffled[result_indices, "id"]
+
+  result_df <- df[sort(result_indices), ]
 
   # Informative message
   message(
-    function_name, ": Thinned from ",
+    function_name,
+    ": Thinned from ",
     nrow(df),
     " to ",
     length(result_indices),
