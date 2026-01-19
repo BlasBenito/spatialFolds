@@ -37,7 +37,9 @@
 #'   \item If n_blocks was computed: calculate rows/cols from aspect ratio
 #' }
 #'
-#' @noRd
+#' @family arg_validation
+#' @autoglobal
+#' @export
 validate_arg_blocks <- function(
   blocks = NULL,
   df = NULL,

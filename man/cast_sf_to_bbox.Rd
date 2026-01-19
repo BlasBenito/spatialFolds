@@ -4,10 +4,10 @@
 \alias{cast_sf_to_bbox}
 \title{Convert sf Object to Bounding Box sf Object}
 \usage{
-cast_sf_to_bbox(x = NULL, ...)
+cast_sf_to_bbox(df = NULL, ...)
 }
 \arguments{
-\item{x}{(required, sf) Spatial dataframe with point geometries. Default: \code{NULL}}
+\item{df}{(required, sf) Spatial dataframe with point geometries. Default: \code{NULL}}
 
 \item{...}{Internal parameters passed from parent functions.}
 }
@@ -48,4 +48,10 @@ plot(sf::st_geometry(xy_sf))
 plot(sf::st_geometry(bbox_sf), add = TRUE, border = "red", lwd = 2)
 }
 }
-\concept{utilities}
+\seealso{
+Other casting_functions: 
+\code{\link{cast_df_to_sf}()},
+\code{\link{cast_sf_to_xy}()},
+\code{\link{cast_xy_to_xyz}()}
+}
+\concept{casting_functions}

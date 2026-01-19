@@ -3,7 +3,9 @@
 #' @param crs (optional, integer) Coordinate reference system as a valid EPSG value. Default: 4326 (WGS84)
 #' @param ... (optional) For internal arguments only.
 #' @return sf data frame with point geometry
-#' @noRd
+#' @family casting_functions
+#' @autoglobal
+#' @export
 cast_df_to_sf <- function(
   df = NULL,
   crs = 4326,

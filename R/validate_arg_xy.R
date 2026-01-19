@@ -20,7 +20,9 @@
 #'   \item Zero rows check
 #' }
 #'
-#' @noRd
+#' @family arg_validation
+#' @autoglobal
+#' @export
 validate_arg_xy <- function(
   xy = NULL,
   function_name = NULL

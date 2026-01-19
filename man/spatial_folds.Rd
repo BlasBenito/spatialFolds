@@ -100,7 +100,6 @@ plan("sequential")  # Reset to sequential
 }
 \seealso{
 Other primary_functions: 
-\code{\link{deduplicate_folds}()},
-\code{\link{spatial_thinning}()}
+\code{\link{deduplicate_folds}()}
 }
 \concept{primary_functions}

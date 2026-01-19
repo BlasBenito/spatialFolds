@@ -68,7 +68,6 @@ folds_strict <- deduplicate_folds(folds, max_cor = 0.8)
 }
 \seealso{
 Other primary_functions: 
-\code{\link{spatial_folds}()},
-\code{\link{spatial_thinning}()}
+\code{\link{spatial_folds}()}
 }
 \concept{primary_functions}

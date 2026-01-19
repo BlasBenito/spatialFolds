@@ -6,29 +6,30 @@
 \usage{
 spatial_thinning(
   df = NULL,
-  method = c("distance", "target"),
   distance = NULL,
   target = NULL,
   seed = 1,
+  quiet = FALSE,
   ...
 )
 }
 \arguments{
-\item{df}{(required, sf or data.frame) Spatial data with point geometries. If data.frame, must have columns named "x" and "y", "longitude" and "latitude", or "lon" and "lat". If sf object, coordinates are extracted from geometry. Default: \code{NULL}}
+\item{df}{(required, sf or data.frame) Spatial data with point geometries.
+If data.frame, must have recognizable coordinate columns (x/lon/longitude
+and y/lat/latitude). Will be converted to sf with CRS 4326. Default: NULL}
 
-\item{method}{(required, character) Thinning strategy to apply. Must be one of "distance" (fixed minimum distance) or "target" (iterative until the required number of records is achieved). Default: \code{"distance"}}
+\item{distance}{(optional, numeric) Incompatible with \code{target}. Minimum distance between nearby points. Must be in same units as coordinates. Auto-calculated (see Details) when \code{NULL} and \code{target = NULL}. Default: \code{NULL} (auto-calculated)}
 
-\item{distance}{(required for method="distance", numeric) Minimum distance between retained points in both x and y dimensions. Points within a rectangle of ±distance will be removed. Must be in same units as coordinates. When NULL, auto-calculated as 0.5 × √(bbox_area / n). Use explicit values when you know the desired spacing. Default: \code{NULL} (auto-calculated)}
+\item{target}{(optional, integer) Incompatible with \code{distance}. Number of points to retain (exact count not guaranteed). Must be between 1 and \code{nrow(df) - 1}. Default: \code{NULL}}
 
-\item{target}{(required for method="target", integer) Target number of points to retain. Result will have <= target points (exact count not guaranteed). Must be between 1 and nrow(df). Default: \code{NULL}}
+\item{seed}{(optional, integer) Seed used to reshuffle the argument \code{df} to change the thinning origin and provide an alternative output. If \code{1}, argument \code{df} is not reshuffled and its first sample is used as thinning origin. Default: \code{1}}
 
-\item{seed}{(optional, integer) Random seed for reproducibility. Each
-repetition gets unique seed derived from this base seed. Default: 1}
+\item{quiet}{(optional; logical) If FALSE, messages are printed. Default: FALSE.}
 
-\item{...}{Internal parameters passed from parent functions.}
+\item{...}{(optional) Not used, reserved for future advanced arguments.}
 }
 \value{
-sf object (matching input type) with thinned subset of points. Row order preserved from input.
+sf dataframe
 }
 \description{
 Resamples points to enforce minimum distance separation or reach a target sample size. Provides two methods:
@@ -40,33 +41,32 @@ Resamples points to enforce minimum distance separation or reach a target sample
 }
 \details{
 This function provides two spatial thinning strategies implemented in C++ for performance:
-\subsection{Method: "distance" - Fixed Minimum Distance Enforcement}{
 
-If distance = NULL, automatically calculates distance = 0.5 × √(bbox_area / n).
-This provides a reasonable starting point based on data extent and point density.
+##"distance" - Minimum Distance Between Points
 
-Applies greedy sequential thinning by removing points within rectangular neighborhoods:
-\enumerate{
-\item Processes points sequentially from first to last
-\item For each retained point, defines rectangular neighborhood: x ± distance, y ± distance
-\item Removes all subsequent points falling within this rectangle
+If \code{distance = NULL} and \code{target = NULL}, automatically calculates \verb{distance = 0.5 × √(area(bbox(df)) / nrow(df))}. This provides a reasonable starting point based on data extent and point density.
+
+The C++ function \code{\link[=thinning_to_distance]{thinning_to_distance()}} applies a fast sequential thinning by removing points within rectangular neighborhoods:
+\itemize{
+\item Processes points sequentially from first to last.
+\item For each retained point, defines rectangular neighborhood: x ± distance, y ± distance.
+\item Removes all points falling within this rectangle.
 \item Continues until all points processed
 \item Returns indices of retained points
 }
 
 \strong{Characteristics:}
 \itemize{
-\item Guarantees no two retained points within distance in BOTH x and y dimensions
+\item Guarantees no two retained points within distance.
 \item Order-dependent: always keeps first point in each neighborhood
 \item Result size depends on point distribution and ordering
 \item Rectangular (Manhattan-style) neighborhoods for computational efficiency
 }
-}
 
-\subsection{Method: "target" - Iterative Distance Increase to Target Count}{
+##"target" - Iterative Distance Increase to Target Count
 
-Applies "distance" method with progressively increasing distances until target reached:
-\enumerate{
+The C++ function \code{\link[=thinning_to_target]{thinning_to_target()}} applies thinning with progressively increasing distances until target reached:
+\itemize{
 \item Calculates initial distance as 0.1\% of bounding box diagonal (if distance_step not provided)
 \item Applies "distance" method with current minimum distance
 \item If result has > target points, increases distance and repeats
@@ -79,10 +79,7 @@ Applies "distance" method with progressively increasing distances until target r
 \item Result will have <= target points (may be fewer, never more)
 \item Cannot guarantee exact count due to greedy algorithm behavior
 \item Automatically balances distance with target through iteration
-\item Typically requires 10-100 iterations with auto-calculated distance_step
 }
-}
-
 \subsection{Use Cases}{
 \itemize{
 \item \strong{Reduce pseudo-replication:} Remove spatially redundant observations
@@ -91,56 +88,33 @@ Applies "distance" method with progressively increasing distances until target r
 \item \strong{Subsample large datasets:} Reduce dataset size while maintaining spatial coverage
 }
 }
-
-\subsection{Performance}{
-
-Implemented in C++ for efficiency:
-\itemize{
-\item method = "distance": function \code{\link[=thinning_to_distance]{thinning_to_distance()}}, O(n²) time, typically < 1 second for 30,000 points
-\item method = "target": function \code{\link[=thinning_to_target]{thinning_to_target()}}, O(k × n²) where k = iterations
-}
-}
 }
 \examples{
-# Example data
+# example data
 data(xy_sf)
 
-# Use auto-calculated distance (recommended starting point)
-thinned_auto <- spatial_thinning(
+# auto-calculated distance
+df_thinned <- spatial_thinning(
   df = xy_sf,
-  method = "distance"
-  # distance = NULL (default) - auto-calculates based on extent and density
+  distance = NULL
 )
-nrow(thinned_auto)  # Shows how many points retained
 
-# Fixed distance thinning
-thinned_fixed <- spatial_thinning(
+nrow(df_thinned)
+
+# fixed distance
+df_thinned <- spatial_thinning(
   df = xy_sf,
-  method = "distance",
-  distance = 10
+  distance = 5 #~555km
 )
-nrow(thinned_fixed)  # Fewer than original
+nrow(df_thinned)
 
-# Target count thinning with auto distance
+# target
 thinned_target <- spatial_thinning(
   df = xy_sf,
-  method = "target",
   target = 100
 )
-nrow(thinned_target)  # Will be <= 100
 
-# Works with data.frames too (converted to sf internally)
-df <- data.frame(x = runif(1000), y = runif(1000))
-thinned_df <- spatial_thinning(
-  df = df,
-  method = "distance",
-  distance = 0.1
-)
+nrow(thinned_target)
 
 }
-\seealso{
-Other primary_functions: 
-\code{\link{deduplicate_folds}()},
-\code{\link{spatial_folds}()}
-}
-\concept{primary_functions}
+\concept{user}

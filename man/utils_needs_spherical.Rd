@@ -48,8 +48,4 @@ polar_xy <- cbind(x = runif(100, -180, 180), y = runif(100, 75, 90))
 utils_needs_spherical(polar_xy)
 
 }
-\seealso{
-Other spherical: 
-\code{\link{cast_xy_to_xyz}()}
-}
 \concept{spherical}

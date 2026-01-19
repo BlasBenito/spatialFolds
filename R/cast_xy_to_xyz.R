@@ -8,8 +8,7 @@
 #' @param xy (required, numeric matrix) Two-column matrix with longitude (x) in
 #'   the first column and latitude (y) in the second column. Coordinates must be
 #'   in degrees. Default: `NULL`
-#' @param function_name (optional, character) Name of the calling function
-#'   for error messages. Default: `NULL`
+#' @param ... Internal parameters passed from parent functions.
 #'
 #' @return Numeric matrix with three columns (x, y, z) representing Cartesian
 #'   coordinates on a unit sphere. The number of rows matches the input.
@@ -41,13 +40,17 @@
 #' pole_xyz <- cast_xy_to_xyz(pole_xy)
 #' round(pole_xyz, 3)  # All points are identical at (0, 0, 1)
 #'
-#' @family spherical
+#' @family casting_functions
 #' @export
 #' @autoglobal
-cast_xy_to_xyz <- function(xy, function_name = NULL) {
+cast_xy_to_xyz <- function(
+  xy = NULL,
+  ...
+) {
+  dots <- list(...)
   function_name <- collinear::validate_arg_function_name(
     default_name = "spatialFolds::cast_xy_to_xyz()",
-    function_name = function_name
+    function_name = dots$function_name
   )
 
   # Input validation

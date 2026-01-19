@@ -20,7 +20,9 @@
 #'   \item Convert to sf via cast_df_to_sf() with crs = NA
 #' }
 #'
-#' @noRd
+#' @family arg_validation
+#' @autoglobal
+#' @export
 validate_arg_sf <- function(
   df = NULL,
   function_name = NULL
@@ -58,6 +60,19 @@ validate_arg_sf <- function(
       df = df,
       crs = NA,
       function_name = function_name
+    )
+  }
+
+  # Check for identical coordinates (zero bbox area)
+  bbox <- sf::st_bbox(df)
+  if (
+    bbox["xmin"] == bbox["xmax"] &&
+      bbox["ymin"] == bbox["ymax"]
+  ) {
+    stop(
+      "\n",
+      function_name,
+      ": All points at same location"
     )
   }
 

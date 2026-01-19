@@ -1,32 +1,25 @@
 #' Transform sf data.frame into xy matrix
 #' @param df (required, sf) An sf data frame with spatial geometry
-#' @param function_name (optional, character) Name of the calling function for error messages. Default: NULL
+#' @param ... Internal parameters passed from parent functions.
 #' @return Numeric matrix with columns "x" and "y"
-#' @noRd
-cast_sf_to_xy <- function(df, function_name = NULL) {
-  # ==========================================================================
-  # Function name for hierarchical error messages
-  # ==========================================================================
+#' @family casting_functions
+#' @autoglobal
+#' @export
+cast_sf_to_xy <- function(
+  df = NULL,
+  ...
+) {
+  dots <- list(...)
+
   function_name <- collinear::validate_arg_function_name(
     default_name = "spatialFolds::cast_sf_to_xy()",
-    function_name = function_name
+    function_name = dots$function_name
   )
 
-  # Validate input is sf object
-  if (!inherits(x = df, what = "sf")) {
-    stop(
-      function_name, ": argument 'df' must be an sf data.frame.",
-      call. = FALSE
-    )
-  }
-
-  # Validate df has rows
-  if (nrow(df) == 0) {
-    stop(
-      function_name, ": argument 'df' has no rows.",
-      call. = FALSE
-    )
-  }
+  df <- validate_arg_sf(
+    df = df,
+    function_name = function_name
+  )
 
   # Get geometry types
   geom_types <- as.character(sf::st_geometry_type(df, by_geometry = FALSE))
@@ -43,7 +36,9 @@ cast_sf_to_xy <- function(df, function_name = NULL) {
   } else {
     # Catch-all for other geometry types
     stop(
-      function_name, ": Unsupported geometry type '", geom_types,
+      function_name,
+      ": Unsupported geometry type '",
+      geom_types,
       "'. Supported types are: POINT, MULTIPOINT, POLYGON, MULTIPOLYGON.",
       call. = FALSE
     )
@@ -52,7 +47,8 @@ cast_sf_to_xy <- function(df, function_name = NULL) {
   # Validate coordinates were extracted
   if (nrow(coords) == 0) {
     stop(
-      function_name, ": Failed to extract coordinates from sf geometry.",
+      function_name,
+      ": Failed to extract coordinates from sf geometry.",
       call. = FALSE
     )
   }

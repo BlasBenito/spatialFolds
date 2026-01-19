@@ -4,15 +4,14 @@
 \alias{cast_xy_to_xyz}
 \title{Convert Planar \code{xy} to Spherical}
 \usage{
-cast_xy_to_xyz(xy, function_name = NULL)
+cast_xy_to_xyz(xy = NULL, ...)
 }
 \arguments{
 \item{xy}{(required, numeric matrix) Two-column matrix with longitude (x) in
 the first column and latitude (y) in the second column. Coordinates must be
 in degrees. Default: \code{NULL}}
 
-\item{function_name}{(optional, character) Name of the calling function
-for error messages. Default: \code{NULL}}
+\item{...}{Internal parameters passed from parent functions.}
 }
 \value{
 Numeric matrix with three columns (x, y, z) representing Cartesian
@@ -53,7 +52,9 @@ round(pole_xyz, 3)  # All points are identical at (0, 0, 1)
 
 }
 \seealso{
-Other spherical: 
-\code{\link{utils_needs_spherical}()}
+Other casting_functions: 
+\code{\link{cast_df_to_sf}()},
+\code{\link{cast_sf_to_bbox}()},
+\code{\link{cast_sf_to_xy}()}
 }
-\concept{spherical}
+\concept{casting_functions}
