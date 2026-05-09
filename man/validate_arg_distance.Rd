@@ -22,9 +22,9 @@ numeric
 Validates Argument \code{distance} in \code{spatial_thinning()}
 }
 \examples{
-data(sf_xy)
-x <- validate_arg_target(
-  df = sf_xy,
+data(xy_sf)
+x <- validate_arg_distance(
+  df = xy_sf,
   distance = NULL
   )
 }

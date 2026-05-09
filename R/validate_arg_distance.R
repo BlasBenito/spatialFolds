@@ -5,9 +5,9 @@
 #'
 #' @returns numeric
 #' @examples
-#' data(sf_xy)
-#' x <- validate_arg_target(
-#'   df = sf_xy,
+#' data(xy_sf)
+#' x <- validate_arg_distance(
+#'   df = xy_sf,
 #'   distance = NULL
 #'   )
 #' @family arg_validation

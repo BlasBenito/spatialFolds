@@ -111,62 +111,58 @@ test_that("thinning_to_target respects target count", {
 test_that("spatial_thinning validates method-specific parameters", {
   data(xy_sf)
 
-  # Missing target for "target" method
-  expect_error(
-    spatial_thinning(df = xy_sf, method = "target", target = NULL),
-    "target"
-  )
-
   # Negative distance
   expect_error(
-    spatial_thinning(df = xy_sf, method = "distance", distance = -1),
+    spatial_thinning(df = xy_sf, distance = -1),
     "must be >= 0"
   )
 
-  # Invalid target
+  # Invalid target (too small)
   expect_error(
-    spatial_thinning(df = xy_sf, method = "target", target = 0),
-    "must be >= 1"
+    spatial_thinning(df = xy_sf, target = 0),
+    "must be between 1 and nrow"
+  )
+
+  # Invalid target (too large - equals nrow)
+  expect_error(
+    spatial_thinning(df = xy_sf, target = nrow(xy_sf)),
+    "must be between 1 and nrow"
   )
 
   # Non-numeric distance
   expect_error(
-    spatial_thinning(df = xy_sf, method = "distance", distance = "10"),
+    spatial_thinning(df = xy_sf, distance = "10"),
     "must be numeric"
   )
 
   # Non-numeric target
   expect_error(
-    spatial_thinning(df = xy_sf, method = "target", target = "100"),
+    spatial_thinning(df = xy_sf, target = "100"),
     "must be numeric"
   )
 })
 
-test_that("spatial_thinning handles sf input", {
+test_that("spatial_thinning handles sf input with distance method", {
   data(xy_sf)
 
-  # Method: distance
-  expect_message(
-    result <- spatial_thinning(
-      df = xy_sf,
-      method = "distance",
-      distance = 1
-    ),
-    "Thinned from"
+  # Method: distance (inferred from providing distance argument)
+  result <- spatial_thinning(
+    df = xy_sf,
+    distance = 1
   )
 
   expect_s3_class(result, "sf")
   expect_true(nrow(result) < nrow(xy_sf))
   expect_true(nrow(result) >= 1)
+})
 
-  # Method: to_target
-  expect_message(
-    result <- spatial_thinning(
-      df = xy_sf,
-      method = "target",
-      target = 500
-    ),
-    "Thinned from"
+test_that("spatial_thinning handles sf input with target method", {
+  data(xy_sf)
+
+  # Method: target (inferred from providing target argument)
+  result <- spatial_thinning(
+    df = xy_sf,
+    target = 500
   )
 
   expect_s3_class(result, "sf")
@@ -180,28 +176,21 @@ test_that("spatial_thinning handles data.frame input", {
   df <- as.data.frame(xy_matrix)
 
   # Should convert to sf internally
-  expect_message(
-    result <- spatial_thinning(
-      df = df,
-      method = "distance",
-      distance = 1
-    ),
-    "Thinned from"
+  result <- spatial_thinning(
+    df = df,
+    distance = 1
   )
 
   expect_s3_class(result, "sf")
   expect_true(nrow(result) < nrow(df))
 })
 
-test_that("spatial_thinning with method='distance' produces valid output", {
+test_that("spatial_thinning with distance produces valid output", {
   data(xy_sf)
 
-  expect_message(
-    result <- spatial_thinning(
-      df = xy_sf,
-      method = "distance",
-      distance = 1
-    )
+  result <- spatial_thinning(
+    df = xy_sf,
+    distance = 1
   )
 
   # Result should be smaller than input
@@ -227,17 +216,14 @@ test_that("spatial_thinning with method='distance' produces valid output", {
   }
 })
 
-test_that("spatial_thinning with method='to_target' produces valid output", {
+test_that("spatial_thinning with target produces valid output", {
   data(xy_sf)
 
   target <- 500
 
-  expect_message(
-    result <- spatial_thinning(
-      df = xy_sf,
-      method = "target",
-      target = target
-    )
+  result <- spatial_thinning(
+    df = xy_sf,
+    target = target
   )
 
   # Result should have <= target rows
@@ -250,26 +236,21 @@ test_that("spatial_thinning with method='to_target' produces valid output", {
 test_that("spatial_thinning handles warnings correctly", {
   data(xy_sf)
 
-  # Target exceeds nrow - should warn and return all
-  expect_warning(
-    result <- spatial_thinning(
+  # Target exceeds nrow - should error (not warn) since target >= nrow(df)
+  expect_error(
+    spatial_thinning(
       df = xy_sf,
-      method = "target",
       target = 40000
     ),
-    "exceeds nrow"
+    "must be between 1 and nrow"
   )
-  expect_equal(nrow(result), nrow(xy_sf))
 
-  # Multiple values for distance
-  expect_warning(
-    result <- spatial_thinning(
-      df = xy_sf,
-      method = "distance",
-      distance = c(0.1, 0.2, 0.3)
-    ),
-    "length > 1"
+  # Target equals nrow(df) - 1 should work
+  result <- spatial_thinning(
+    df = xy_sf,
+    target = nrow(xy_sf) - 1
   )
+  expect_s3_class(result, "sf")
 })
 
 test_that("thinning_to_target returns valid indices for use in spatial_folds", {
@@ -296,12 +277,11 @@ test_that("thinning_to_target returns valid indices for use in spatial_folds", {
 test_that("spatial_thinning uses default distance when NULL", {
   data(xy_sf)
 
-  # Should work without explicit distance parameter
+  # Should work without explicit distance parameter (auto-calculates)
   expect_message(
     result <- spatial_thinning(
-      df = xy_sf,
-      method = "distance"
-      # distance = NULL implicitly
+      df = xy_sf
+      # Both distance and target are NULL - uses auto-calculated distance
     ),
     "Auto-calculated distance"
   )
@@ -318,8 +298,8 @@ test_that("spatial_thinning auto-calculated distance works", {
 
   expect_message(
     result <- spatial_thinning(
-      df = df_sf,
-      method = "distance"
+      df = df_sf
+      # Auto-calculate distance when both NULL
     ),
     "Auto-calculated distance"
   )
@@ -331,19 +311,30 @@ test_that("spatial_thinning auto-calculated distance works", {
   expect_true(nrow(result) <= nrow(df_sf))
 })
 
-test_that("spatial_thinning handles zero bbox_area edge case", {
-  # All points at same location
+test_that("spatial_thinning errors on zero bbox_area (all points at same location)", {
+  # All points at same location - degenerate geometry
   df <- data.frame(x = rep(5, 100), y = rep(5, 100))
   df_sf <- cast_df_to_sf(df)
 
-  expect_message(
-    result <- spatial_thinning(
-      df = df_sf,
-      method = "distance"
-    ),
+  # validate_arg_sf errors on degenerate geometry
+  expect_error(
+    spatial_thinning(df = df_sf),
     "All points at same location"
   )
+})
 
-  # With distance = 0, should return all points
-  expect_equal(nrow(result), nrow(df_sf))
+test_that("spatial_thinning prefers distance when both provided", {
+  data(xy_sf)
+
+  # When both distance and target provided, should use distance and message
+  expect_message(
+    result <- spatial_thinning(
+      df = xy_sf,
+      distance = 1,
+      target = 100
+    ),
+    "cannot be used together.*Using 'distance"
+  )
+
+  expect_s3_class(result, "sf")
 })

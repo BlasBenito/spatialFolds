@@ -5,9 +5,9 @@
 #'
 #' @returns integer
 #' @examples
-#' data(sf_xy)
+#' data(xy_sf)
 #' x <- validate_arg_target(
-#'   df = sf_xy,
+#'   df = xy_sf,
 #'   target = 10
 #'   )
 #' @family arg_validation
@@ -27,15 +27,32 @@ validate_arg_target <- function(
     target <- ceiling(nrow(df) / 2)
   }
 
-  target <- as.integer(target)
-
-  if (!is.numeric(target) || target > (nrow(df) - 1) || target < 1) {
+  # Type validation BEFORE coercion
+  if (!is.numeric(target)) {
     stop(
       function_name,
-      ": argument 'target' must be numeric integer between 1 and ",
-      nrow(df),
-      ".",
+      ": argument 'target' must be numeric.",
       call. = FALSE
     )
   }
+
+  target <- as.integer(target)
+
+  # Take first value if length > 1
+  if (length(target) > 1) {
+    target <- target[1]
+  }
+
+  # Range validation
+  if (target < 1 || target > (nrow(df) - 1)) {
+    stop(
+      function_name,
+      ": argument 'target' must be between 1 and nrow(df) - 1 (",
+      nrow(df) - 1,
+      ").",
+      call. = FALSE
+    )
+  }
+
+  target
 }

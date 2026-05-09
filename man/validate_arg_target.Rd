@@ -22,9 +22,9 @@ integer
 Validates Argument \code{target} in \code{spatial_thinning()}
 }
 \examples{
-data(sf_xy)
+data(xy_sf)
 x <- validate_arg_target(
-  df = sf_xy,
+  df = xy_sf,
   target = 10
   )
 }

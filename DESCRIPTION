@@ -1,9 +1,9 @@
 Package: spatialFolds
-Title: Fast Spatial Data-Splitting and Thinning
+Title: Fast Data-Splitting for Spatial Cross-Validation
 Version: 0.1.0
 Authors@R: 
     person("First", "Last", , "blasbenito@gmail.com", role = c("aut", "cre"))
-Description: Fast tools for spatial cross-validation and spatial thinning of point data, powered by C++ via 'Rcpp'. Generates training and testing folds (Roberts et al. 2017 <doi:10.1111/ecog.02881>) using three methods: contiguous (rectangle-growing from distributed centers), blocks (grid-cell selection), and random (traditional splitting). Introduces a novel contiguous method that preserves spatial structure by growing rectangular folds from well-distributed center points. Provides spatial thinning to reduce point density while maintaining spatial coverage. Integrates with 'tidymodels' via 'rsample'-compatible resampling objects for use with model tuning workflows. Supports parallel execution via 'future' and progress tracking via 'progressr'.
+Description: Fast C++ toolset for spatial cross-validation and thinning of point data. Generates training and testing folds (Roberts et al. 2017 <doi:10.1111/ecog.02881>) using three methods: contiguous (rectangle-growing from distributed centers), blocks (grid-cell selection), and random (traditional splitting). Introduces a novel contiguous method that preserves spatial structure by growing rectangular folds from well-distributed center points. Provides spatial thinning to reduce point density while maintaining spatial coverage. Integrates with 'tidymodels' via 'rsample'-compatible resampling objects for use with model tuning workflows. Supports parallel execution via 'future' and progress tracking via 'progressr'.
 License: MIT + file LICENSE
 Encoding: UTF-8
 Roxygen: list(markdown = TRUE, roclets = c("collate", "namespace", "rd",

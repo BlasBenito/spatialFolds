@@ -2,7 +2,7 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
-**Important: ignore the dev/* folder**
+**Important: ignore the dev/* folder. Open tasks are tracked in TODO.md.**
 
 ## Package Overview
 
@@ -91,11 +91,11 @@ testthat::test_file("tests/testthat/test-....R")
 
 ## Workflow
 
-9. **Preserve existing code architecture when making changes** — When fixing bugs or adding features, follow the patterns already established in the codebase. Don't refactor unrelated code or introduce new dependencies unless explicitly requested.
+1. **Preserve existing code architecture when making changes** — When fixing bugs or adding features, follow the patterns already established in the codebase. Don't refactor unrelated code or introduce new dependencies unless explicitly requested.
 
-10. **Run the test file immediately after modifying a function** — After editing any R or C++ function, run its corresponding test file with `devtools::test_file("tests/testthat/test-<function_name>.R")` to catch regressions early.
+2. **Run the test file immediately after modifying a function** — After editing any R or C++ function, run its corresponding test file with `devtools::test_file("tests/testthat/test-<function_name>.R")` to catch regressions early.
 
-11. **Run devtools::check() and testthat before considering a task complete** — Verify that changes pass R CMD check with no errors or warnings, and that existing tests still pass. Flag any new test failures immediately rather than waiting for me to discover them.
+3. **Run devtools::check() and testthat before considering a task complete** — Verify that changes pass R CMD check with no errors or warnings, and that existing tests still pass. Flag any new test failures immediately rather than waiting for me to discover them.
 
 ## Documentation System
 
@@ -170,64 +170,17 @@ expect_true(all(selected_x >= min_x & selected_x <= max_x))
 
 ### Rcpp/C++ Patterns
 
-**Standard includes:**
-```cpp
-#include <Rcpp.h>
-#include <algorithm>  // for std::shuffle, std::max, etc.
-#include <random>     // for std::mt19937, modern RNG
-#include <vector>     // for std::vector
-using namespace Rcpp;
-```
-
-**Random number generation:**
-```cpp
-// Use modern C++11 random library, not deprecated std::random_shuffle
-std::mt19937 rng(seed);
-std::shuffle(indices.begin(), indices.end(), rng);
-```
-
-**Type conversion:**
-```cpp
-// Convert double to int when needed
-int target_int = static_cast<int>(target);
-```
-
-**Index conversion:**
-```cpp
-// R uses 1-based indexing, C++ uses 0-based
-int center_idx = center - 1;
-```
-
-**Vector operations:**
-```cpp
-// Extract columns from NumericMatrix
-NumericVector x_coords = xy(_, 0);  // all rows, first column
-NumericVector y_coords = xy(_, 1);  // all rows, second column
-
-// Initialize LogicalVector
-LogicalVector result(n, false);  // n elements, all FALSE
-```
-
-**Memory efficiency:**
-```cpp
-// Use std::vector for index operations
-std::vector<int> indices(n);
-for (int i = 0; i < n; i++) {
-  indices[i] = i;
-}
-```
-
-**Documentation in C++:**
-- Use roxygen2 format directly in C++ files
-- Marker: `// [[Rcpp::export]]` to export to R
-- Documentation goes in comments before function: `//'`
-- After `devtools::load_all()`, Rcpp auto-generates R wrappers in `R/RcppExports.R`
+Key conventions (see existing `src/*.cpp` for full examples):
+- Use `#include <Rcpp.h>`, `<algorithm>`, `<random>`, `<vector>`; `using namespace Rcpp;`
+- Use `std::mt19937 rng(seed)` + `std::shuffle` — never `std::random_shuffle` (deprecated)
+- R is 1-based, C++ is 0-based — convert with `int idx = r_idx - 1;`
+- Extract matrix columns: `NumericVector x = xy(_, 0);`
+- Document with `//'` roxygen2 comments; export with `// [[Rcpp::export]]`
 
 **Compilation workflow:**
 1. Write/modify `.cpp` file in `src/`
-2. Run `devtools::load_all()` - compiles and generates R wrappers
-3. Run `devtools::document()` twice - generates `.Rd` files and updates NAMESPACE
-4. Function is now available for testing
+2. `devtools::load_all()` — compiles and generates `R/RcppExports.R`
+3. `devtools::document()` twice — generates `.Rd` files and updates NAMESPACE
 
 ### Matrix Handling
 - Assume xy matrix has columns "x" and "y"

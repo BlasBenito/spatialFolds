@@ -67,3 +67,19 @@ template:
 
 # See pkgdown documentation for more options:
 # https://pkgdown.r-lib.org/reference/build_site.html
+
+build:
+  extra_packages:
+    - ggplot2
+    - cranlogs
+
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+    branches: [main, master]
+  release:
+    types: [published]
+  workflow_dispatch:  # allows manual triggering
+  schedule:
+    - cron: '0 0 1 * *'  # runs at midnight UTC on the 1st of each month

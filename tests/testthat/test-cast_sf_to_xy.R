@@ -10,27 +10,30 @@ test_that("cast_sf_to_xy() works with point geometry", {
   expect_true(is.numeric(result))
 })
 
-test_that("cast_sf_to_xy() validates input is sf object", {
-  # Data.frame input
+test_that("cast_sf_to_xy() handles data.frame input via validate_arg_sf", {
+  # Data.frame input is now converted to sf via validate_arg_sf
   df <- data.frame(x = 1:10, y = 1:10)
 
-  expect_error(
-    cast_sf_to_xy(df),
-    "must be an sf data.frame"
-  )
+  result <- cast_sf_to_xy(df)
 
-  # Matrix input
+  expect_true(is.matrix(result))
+  expect_equal(ncol(result), 2)
+  expect_equal(nrow(result), 10)
+})
+
+test_that("cast_sf_to_xy() validates unsupported input types", {
+  # Matrix input - errors via cast_df_to_sf
   mat <- matrix(1:20, ncol = 2)
 
   expect_error(
     cast_sf_to_xy(mat),
-    "must be an sf data.frame"
+    "must be a data.frame"
   )
 
   # NULL input
   expect_error(
     cast_sf_to_xy(NULL),
-    "must be an sf data.frame"
+    "cannot be NULL"
   )
 })
 

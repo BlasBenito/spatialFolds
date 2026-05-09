@@ -14,7 +14,7 @@ z <- spatial_thinning(
   seed = 2
 )
 
-mapview(y) + mapview(z, col.regions = "red4")
+mapview(y, col.regions = "blue4") + mapview(z, col.regions = "red4")
 
 
 y <- spatial_thinning(
