@@ -1,0 +1,386 @@
+---
+title: "Usage"
+output:
+  rmarkdown::html_document:
+    toc: true
+    toc_title: "Content"
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  eval      = TRUE,
+  collapse  = TRUE,
+  comment   = "#>",
+  fig.width = 8,
+  fig.align = "center",
+  dpi = 150,
+  out.width = "100%"
+)
+```
+
+```{r, include = FALSE}
+if (!requireNamespace("pak", quietly = TRUE)) {
+  install.packages("pak")
+}
+library(pak)
+pak::pkg_install(
+  c(
+    "dplyr",
+    "sf",
+    "mapview",
+    "viridis",
+    "spatialData"
+  ),
+  ask = FALSE
+)
+```
+
+```{r}
+library(dplyr)
+library(sf)
+library(mapview)
+library(viridis)
+library(spatialData)
+library(spatialFolds)
+```
+
+```{r}
+data("vi")
+data("interaction")
+data("trees")
+```
+
+
+# Cast functions
+
+These functions cast POINT `sf` dataframes and `xy` data frames.
+
+## `cast_df_to_sf()`
+
+Transforms a data frame with coordinate columns to a POINT `sf` dataframe.
+
+```{r}
+#build xy dataframe
+vi_xy <- vi |>
+  sf::st_coordinates() |>
+  as.data.frame()
+
+head(vi_xy)
+```
+
+```{r}
+vi_sf <- spatialFolds::cast_df_to_sf(
+  df = vi_xy
+)
+
+vi_sf
+```
+
+## `cast_sf_to_xy()`
+
+Extracts a two-column `xy` matrix from an `sf` dataframe. For POLYGON geometries, centroids are used.
+
+```{r}
+vi_xy_matrix <- cast_sf_to_xy(vi)
+head(vi_xy_matrix)
+```
+
+```{r}
+# Also works on polygons (uses centroids)
+trees_xy <- cast_sf_to_xy(trees)
+head(trees_xy)
+```
+
+## `cast_sf_to_bbox()`
+
+Extracts the bounding box of an `sf` object as a one-row rectangular polygon `sf` dataframe.
+
+```{r}
+interaction_bbox <- cast_sf_to_bbox(interaction)
+
+plot(sf::st_geometry(interaction))
+plot(sf::st_geometry(interaction_bbox), add = TRUE, border = "red", lwd = 2)
+```
+
+## `cast_xy_to_xyz()`
+
+Converts longitude/latitude coordinates to 3D Cartesian coordinates on a unit sphere. This eliminates discontinuities at the dateline and poles.
+
+```{r}
+vi_xyz <- cast_xy_to_xyz(vi_xy_matrix[1:5, ])
+round(vi_xyz, 3)
+```
+
+```{r}
+# North pole convergence: all longitudes map to the same point
+pole_xy <- cbind(x = c(0, 90, 180), y = c(90, 90, 90))
+round(cast_xy_to_xyz(pole_xy), 3)  # all rows identical at (0, 0, 1)
+```
+
+
+# Utility functions
+
+## `utils_needs_spherical()`
+
+Analyzes coordinate ranges (in degrees) to determine whether spherical geometry should be used. Returns `TRUE` for global data near the dateline or poles.
+
+```{r}
+# vi is in EPSG:4326 degrees and spans globally — returns TRUE
+utils_needs_spherical(vi_xy_matrix)
+```
+
+```{r}
+# Local geographic coordinates in degrees — returns FALSE
+local_xy <- cbind(x = runif(100, -5, 5), y = runif(100, 40, 45))
+utils_needs_spherical(local_xy)
+```
+
+```{r}
+# Compute interaction_xy for use in later examples
+# Note: interaction is in EPSG:25830 (UTM meters)
+interaction_xy <- cast_sf_to_xy(interaction)
+```
+
+
+# Spatial Thinning
+
+## `spatial_thinning()`
+
+Resamples points to enforce minimum distance separation or reach a target sample size.
+
+```{r}
+# Auto-calculated distance
+vi_thinned_auto <- spatial_thinning(df = vi)
+nrow(vi_thinned_auto)
+```
+
+```{r}
+# Fixed distance (degrees)
+vi_thinned_dist <- spatial_thinning(df = vi, distance = 5)
+nrow(vi_thinned_dist)
+```
+
+```{r}
+# Target number of points
+vi_thinned_target <- spatial_thinning(df = vi, target = 300)
+nrow(vi_thinned_target)
+```
+
+## `thinning_to_distance()`
+
+C++ function applying greedy sequential thinning with a fixed minimum distance. Returns indices of retained points.
+
+```{r}
+# interaction is in UTM meters; use 500 m as minimum separation distance
+retained <- thinning_to_distance(xy = interaction_xy, distance = 500)
+length(retained)
+```
+
+## `thinning_to_target()`
+
+C++ function applying iterative thinning using binary search on distance until the target count is reached. Returns indices of retained points.
+
+```{r}
+retained_t <- thinning_to_target(xy = interaction_xy, target = 200L)
+length(retained_t)
+```
+
+
+# Spatial Folds
+
+## `spatial_folds()`
+
+Generates training/testing folds for spatial cross-validation. Returns a data frame with one logical column per fold.
+
+```{r}
+# All three methods, single training fraction
+folds <- spatial_folds(
+  df = interaction,
+  methods = c("contiguous", "random", "blocks"),
+  training_fraction = 0.75,
+  repetitions = 5,
+  seed = 1
+)
+dim(folds)
+names(folds)
+```
+
+```{r}
+# Multiple training fractions
+folds_multi <- spatial_folds(
+  df = interaction,
+  methods = "random",
+  training_fraction = c(0.75, 0.5),
+  repetitions = 3,
+  seed = 1
+)
+names(folds_multi)
+```
+
+## `deduplicate_folds()`
+
+Removes highly correlated (redundant) folds within each method-fraction group.
+
+```{r}
+folds_many <- spatial_folds(
+  df = interaction,
+  methods = "contiguous",
+  training_fraction = 0.75,
+  repetitions = 20,
+  seed = 1
+)
+ncol(folds_many)
+```
+
+```{r}
+folds_deduped <- deduplicate_folds(folds_many)
+ncol(folds_deduped)
+```
+
+## `spatial_fold_plot()`
+
+Visualizes one fold from a `spatial_folds()` result, showing training and testing samples.
+
+```{r}
+spatial_fold_plot(
+  df = interaction,
+  training_fold = folds$contiguous_0.75_1
+)
+```
+
+
+# Low-level fold methods
+
+## `training_mask()`
+
+Thin R wrapper that routes to the appropriate C++ method and returns a single logical training/testing vector.
+
+```{r}
+mask_random <- training_mask(
+  xy = interaction_xy,
+  method = "random",
+  seed = 42L,
+  target = 750L
+)
+sum(mask_random)
+```
+
+## `method_contiguous_planar()`
+
+C++ function for contiguous training folds using planar (rectangular) geometry. Suitable for local to subcontinental data.
+
+```{r}
+x_range <- diff(range(interaction_xy[, "x"]))
+y_range <- diff(range(interaction_xy[, "y"]))
+
+fold_planar <- method_contiguous_planar(
+  xy = interaction_xy,
+  center = 1L,
+  step_x = x_range / 1000,
+  step_y = y_range / 1000,
+  target = 750L
+)
+sum(fold_planar)
+```
+
+## `method_contiguous_spherical()`
+
+C++ function for contiguous training folds using spherical (angular cap) geometry. Required for global data near the dateline or poles.
+
+```{r}
+vi_xy_matrix <- cast_sf_to_xy(vi)
+vi_xyz <- cast_xy_to_xyz(vi_xy_matrix)
+x_range_vi <- diff(range(vi_xy_matrix[, "x"]))
+y_range_vi <- diff(range(vi_xy_matrix[, "y"]))
+ang_step <- mean(c(x_range_vi, y_range_vi)) / 1000 * pi / 180
+
+fold_sph <- method_contiguous_spherical(
+  xyz = vi_xyz,
+  center = 1L,
+  angular_step = ang_step,
+  target = 5000L
+)
+sum(fold_sph)
+```
+
+## `method_random()`
+
+C++ function for random data splitting using Fisher-Yates shuffle. Reproducible with a seed.
+
+```{r}
+fold_rnd <- method_random(
+  xy = interaction_xy,
+  seed = 42L,
+  target = 750L
+)
+sum(fold_rnd)
+```
+
+## `method_blocks()`
+
+C++ function that selects entire grid blocks until the target count is reached. Requires pre-computed block IDs from the internal `block_ids()` function.
+
+```{r}
+blocks_config <- validate_arg_blocks(blocks = NULL, df = interaction)
+block_id_vec <- spatialFolds:::block_ids(interaction, blocks_config$rows, blocks_config$cols)
+
+fold_blk <- method_blocks(
+  xy = interaction_xy,
+  block_id = block_id_vec,
+  seed = 42L,
+  target = 750L
+)
+sum(fold_blk)
+```
+
+
+# Validation functions
+
+## `validate_arg_sf()`
+
+Validates `sf` or `data.frame` inputs, converting data frames to sf when needed.
+
+```{r}
+validated <- validate_arg_sf(df = interaction)
+names(validated)   # returns the validated sf object
+```
+
+## `validate_arg_xy()`
+
+Validates xy matrix inputs. Returns the input silently on success; errors on failure.
+
+```{r}
+validate_arg_xy(xy = interaction_xy)  # silent on success
+```
+
+## `validate_arg_blocks()`
+
+Validates the `blocks` argument and computes grid dimensions for the blocks method.
+
+```{r}
+blocks_auto <- validate_arg_blocks(blocks = NULL, df = interaction)
+blocks_auto  # $rows, $cols
+```
+
+```{r}
+blocks_manual <- validate_arg_blocks(blocks = c(5L, 10L), df = interaction)
+blocks_manual
+```
+
+## `validate_arg_distance()`
+
+Validates the `distance` argument for `spatial_thinning()`. Auto-calculates distance when `NULL`.
+
+```{r}
+dist_auto <- validate_arg_distance(df = interaction, distance = NULL)
+dist_auto
+```
+
+## `validate_arg_target()`
+
+Validates the `target` argument for `spatial_thinning()`.
+
+```{r}
+target_val <- validate_arg_target(df = interaction, target = 500L)
+target_val
+```

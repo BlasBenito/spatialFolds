@@ -232,3 +232,38 @@ test_that("error: center out of bounds throws error", {
     "center index.*out of bounds"
   )
 })
+
+test_that("works with projected CRS coordinates (meter scale)", {
+  set.seed(42)
+  n <- 500
+  x_utm <- runif(n, 490000, 510000)
+  y_utm <- runif(n, 4490000, 4510000)
+  xy_utm <- cbind(x = x_utm, y = y_utm)
+
+  center <- 1
+  result <- method_contiguous_planar(
+    xy = xy_utm,
+    center = center,
+    step_x = 2000,
+    step_y = 2000,
+    target = 100
+  )
+
+  expect_true(result[center])
+  expect_true(sum(result) >= 100)
+
+  selected_x <- xy_utm[result, "x"]
+  selected_y <- xy_utm[result, "y"]
+  non_selected_x <- xy_utm[!result, "x"]
+  non_selected_y <- xy_utm[!result, "y"]
+
+  tol <- 1e-6
+  x_min_s <- min(selected_x) - tol
+  x_max_s <- max(selected_x) + tol
+  y_min_s <- min(selected_y) - tol
+  y_max_s <- max(selected_y) + tol
+
+  outside_x <- non_selected_x < x_min_s | non_selected_x > x_max_s
+  outside_y <- non_selected_y < y_min_s | non_selected_y > y_max_s
+  expect_true(all(outside_x | outside_y))
+})
